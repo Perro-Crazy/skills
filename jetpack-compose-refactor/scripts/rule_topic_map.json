@@ -1,0 +1,135 @@
+{
+  "unremembered-mutable-state": {
+    "topic": "state-and-recomposition",
+    "severity": "warning",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/03-unstable-collections-and-remember-before-after.md",
+    "mirrors": "Android Lint: UnrememberedMutableState; ktlint compose-rules: compose:remember-missing-check; detekt compose-rules: RememberMissing (ids de ktlint/detekt confirmados rodando as ferramentas de verdade)"
+  },
+  "autoboxing-state-creation": {
+    "topic": "state-and-recomposition",
+    "severity": "warning",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/03-unstable-collections-and-remember-before-after.md",
+    "mirrors": "Android Lint: AutoboxingStateCreation; ktlint compose-rules: compose:mutable-state-autoboxing (confirmado rodando a ferramenta)"
+  },
+  "unstable-collection-param": {
+    "topic": "state-and-recomposition",
+    "severity": "warning",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/03-unstable-collections-and-remember-before-after.md",
+    "mirrors": "detekt/ktlint compose-rules: ComposeUnstableCollections"
+  },
+  "launched-effect-key-risk": {
+    "topic": "state-and-recomposition",
+    "severity": "info",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/04-side-effects-and-derivedstate-before-after.md",
+    "mirrors": "Sem cobertura direta em Android Lint/ktlint/detekt — checagem própria inspirada nas diretrizes oficiais de side-effects do Compose"
+  },
+  "composition-local-overuse": {
+    "topic": "state-and-recomposition",
+    "severity": "info",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/04-side-effects-and-derivedstate-before-after.md",
+    "mirrors": "ktlint compose-rules: compose:compositionlocal-allowlist (confirmado rodando a ferramenta); detekt compose-rules: CompositionLocalUsage (id não confirmado neste pass)"
+  },
+  "modifier-param-missing": {
+    "topic": "modifier-conventions",
+    "severity": "warning",
+    "references_file": "references/modifier-conventions.md",
+    "examples_file": "examples/02-modifier-parameter-before-after.md",
+    "mirrors": "Android Lint: ModifierParameter; ktlint compose-rules: compose:modifier-missing-check; detekt compose-rules: ModifierMissing (ids confirmados rodando as ferramentas de verdade)"
+  },
+  "modifier-param-no-default": {
+    "topic": "modifier-conventions",
+    "severity": "warning",
+    "references_file": "references/modifier-conventions.md",
+    "examples_file": "examples/02-modifier-parameter-before-after.md",
+    "mirrors": "ktlint compose-rules: compose:modifier-without-default-check; detekt compose-rules: ModifierWithoutDefault (ids confirmados rodando as ferramentas de verdade)"
+  },
+  "modifier-param-wrong-name": {
+    "topic": "modifier-conventions",
+    "severity": "warning",
+    "references_file": "references/modifier-conventions.md",
+    "examples_file": "examples/02-modifier-parameter-before-after.md",
+    "mirrors": "ktlint compose-rules: compose:modifier-naming; detekt compose-rules: ModifierNaming (ids confirmados rodando as ferramentas de verdade)"
+  },
+  "modifier-reused": {
+    "topic": "modifier-conventions",
+    "severity": "info",
+    "references_file": "references/modifier-conventions.md",
+    "examples_file": "examples/02-modifier-parameter-before-after.md",
+    "mirrors": "detekt/ktlint compose-rules: ModifierReused"
+  },
+  "modifier-composed-deprecated": {
+    "topic": "modifier-conventions",
+    "severity": "info",
+    "references_file": "references/modifier-conventions.md",
+    "examples_file": "examples/02-modifier-parameter-before-after.md",
+    "mirrors": "ktlint compose-rules: compose:modifier-composed-check (confirmado rodando a ferramenta) — recomendação oficial de migração para Modifier.Node"
+  },
+  "composable-naming": {
+    "topic": "naming-and-api-shape",
+    "severity": "warning",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
+    "mirrors": "Android Lint: ComposableNaming; ktlint compose-rules: compose:naming-check; detekt compose-rules: ComposableNaming (ids confirmados rodando as ferramentas de verdade)"
+  },
+  "event-callback-naming": {
+    "topic": "naming-and-api-shape",
+    "severity": "info",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
+    "mirrors": "ktlint compose-rules: compose:parameter-naming (confirmado rodando a ferramenta); detekt compose-rules: ComposableEventParameterNaming (id não confirmado neste pass)"
+  },
+  "param-ordering": {
+    "topic": "naming-and-api-shape",
+    "severity": "warning",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
+    "mirrors": "Android Lint: ComposableParametersOrdering; detekt compose-rules: ComposableParamOrder"
+  },
+  "multiple-content-emitters": {
+    "topic": "naming-and-api-shape",
+    "severity": "warning",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
+    "mirrors": "ktlint compose-rules: compose:multiple-emitters-check (confirmado rodando a ferramenta); detekt compose-rules: ComposeMultipleContentEmitters (id não confirmado neste pass)"
+  },
+  "preview-naming-visibility": {
+    "topic": "naming-and-api-shape",
+    "severity": "warning",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
+    "mirrors": "ktlint compose-rules: compose:preview-public-check; detekt compose-rules: PreviewPublic (ids confirmados rodando as ferramentas de verdade)"
+  },
+  "viewmodel-param-forwarding": {
+    "topic": "viewmodel-architecture",
+    "severity": "warning",
+    "references_file": "references/viewmodel-architecture.md",
+    "examples_file": "examples/05-viewmodel-forwarding-before-after.md",
+    "mirrors": "detekt/ktlint compose-rules: ComposeViewModelForwarding"
+  },
+  "viewmodel-injection-in-leaf": {
+    "topic": "viewmodel-architecture",
+    "severity": "info",
+    "references_file": "references/viewmodel-architecture.md",
+    "examples_file": "examples/05-viewmodel-forwarding-before-after.md",
+    "mirrors": "ktlint compose-rules: compose:vm-injection-check; detekt compose-rules: ViewModelInjection (ids confirmados rodando as ferramentas de verdade)"
+  },
+  "lazy-items-missing-key": {
+    "topic": "lazy-list-performance",
+    "severity": "warning",
+    "references_file": "references/lazy-list-performance.md",
+    "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria"
+  },
+  "lazy-items-missing-content-type": {
+    "topic": "lazy-list-performance",
+    "severity": "info",
+    "references_file": "references/lazy-list-performance.md",
+    "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria"
+  }
+}
