@@ -13,12 +13,21 @@ sem depender de nenhuma dessas ferramentas estar configurada no projeto-alvo.
 
 ## Filosofia
 
-Toda refatoração feita por este skill deve ser rastreável a algo concreto: um finding
-do scanner (`scripts/scan_compose_components.py`) ou uma checagem nomeada
-explicitamente em `references/*.md`. Nunca introduza mudanças estilísticas soltas só
-porque "parecem melhores" — se não há um finding ou uma regra documentada por trás,
-não é escopo desta refatoração. Isso mantém os diffs revisáveis e evita misturar
-refactor com gosto pessoal.
+Toda refatoração feita por este skill deve ser rastreável a um finding concreto do
+scanner (`scripts/scan_compose_components.py`). Nunca introduza mudanças estilísticas
+soltas só porque "parecem melhores", e nunca reporte como "problema encontrado" algo
+que não veio do scanner — se não há um finding, não é escopo desta refatoração. Isso
+mantém os diffs revisáveis, evita misturar refactor com gosto pessoal, e garante que
+rodar o scanner duas vezes no mesmo código sempre produz a mesma lista de problemas
+(o script já é determinístico — ver `scripts/README.md`).
+
+Ler o código-fonte é permitido e esperado, mas só para **confirmar ou descartar** um
+finding do scanner antes de aplicar a correção (ver limitações conhecidas do parser
+heurístico, seção "Não confie cegamente no scanner" mais abaixo) — nunca para
+"descobrir" problemas adicionais por conta própria. Se, lendo o código, você notar algo
+que parece um problema real mas não tem finding correspondente, não o inclua na lista
+de problemas nem aplique a correção — trate como observação e siga o passo opcional
+"Revisão manual" abaixo.
 
 ## Workflow
 
@@ -86,12 +95,30 @@ copiar literalmente.
   estado adiciona/remove parâmetros), avise isso explicitamente no resumo — é uma
   mudança visível para quem chama, não algo para passar despercebido.
 
-### 7. Resumir
+### 7. Revisão manual (opcional, só sob pedido explícito)
 
-Ao final, reporte: contagem de findings antes/depois por tópico, lista de arquivos
-alterados, e qualquer item propositalmente adiado com o motivo (ex.: "`unstable-collection-param`
-em `Foo.tags: List<String>` exigiria adicionar `kotlinx-collections-immutable` — não
-adicionei a dependência sem confirmar, ver seção abaixo").
+Isso é um passo à parte, não uma extensão silenciosa do passo 4. Só execute se o
+usuário pedir explicitamente algo como "revise esse arquivo manualmente também" ou
+"tem mais alguma coisa que o scanner não pegaria". Ao fazer isso:
+
+- Deixe claro, antes de começar, que essa parte é leitura livre de código, não uma
+  checagem automatizada — logo **não é reproduzível** (rodar de novo pode notar coisas
+  diferentes), diferente da lista do scanner.
+- No relatório final, mantenha essa lista **separada e rotulada** (ver passo 8) —
+  nunca misturada com a contagem de findings do scanner.
+- Não aplique correção alguma baseada só nisso sem confirmar com o usuário primeiro.
+
+### 8. Resumir
+
+Ao final, reporte em duas listas sempre separadas:
+
+1. **Findings do scanner (determinístico)** — contagem antes/depois por tópico, lista
+   de arquivos alterados, e qualquer item propositalmente adiado com o motivo (ex.:
+   "`unstable-collection-param` em `Foo.tags: List<String>` exigiria adicionar
+   `kotlinx-collections-immutable` — não adicionei a dependência sem confirmar, ver
+   seção abaixo"). Essa lista é a mesma se o scanner rodar de novo no mesmo código.
+2. **Observações manuais (só se o passo 7 foi executado)** — rotulada explicitamente
+   como não determinística, sem entrar na contagem acima.
 
 ## Índice de referências
 
@@ -101,7 +128,7 @@ adicionei a dependência sem confirmar, ver seção abaixo").
 | Convenções de Modifier | `references/modifier-conventions.md` | findings: `modifier-param-missing`, `modifier-param-no-default`, `modifier-param-wrong-name`, `modifier-reused`, `modifier-composed-deprecated` |
 | Naming e forma de API | `references/naming-and-api-shape.md` | findings: `composable-naming`, `event-callback-naming`, `param-ordering`, `multiple-content-emitters`, `preview-naming-visibility` |
 | Arquitetura ViewModel | `references/viewmodel-architecture.md` | findings: `viewmodel-param-forwarding`, `viewmodel-injection-in-leaf` |
-| Performance de listas preguiçosas | `references/lazy-list-performance.md` | findings: `lazy-items-missing-key`, `lazy-items-missing-content-type` — **sempre revise este tópico mesmo com zero findings de linter**, já que nenhuma dessas checagens tem cobertura em Android Lint/ktlint/detekt hoje (ver o arquivo para o porquê) |
+| Performance de listas preguiçosas | `references/lazy-list-performance.md` | findings: `lazy-items-missing-key`, `lazy-items-missing-content-type` — essas duas checagens só existem no scanner deste skill (nenhum Android Lint/ktlint/detekt cobre isso hoje); abra este arquivo sempre que o scanner reportar um desses dois findings, mesmo que ferramentas externas não tenham achado nada |
 | Glossário Android Lint | `references/android-lint-compose-rules.md` | proveniência — qual regra real cada checagem espelha |
 | Glossário ktlint compose-rules | `references/ktlint-compose-rules.md` | proveniência |
 | Glossário detekt compose-rules | `references/detekt-compose-rules.md` | proveniência |
