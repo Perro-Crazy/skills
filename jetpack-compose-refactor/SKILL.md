@@ -50,24 +50,32 @@ regra real de linter aquela checagem espelha, quando existe) e o `referencesFile
 `detekt`/`ktlintCheck` do projeto-alvo — esse scanner é a fonte primária e funciona
 mesmo sem nenhum Gradle configurado, inclusive contra uma pasta solta de `.kt`.
 
-### 3. (Opcional) Corroboração externa
-
-Se quiser uma segunda opinião real:
+### 3. Corroboração externa (obrigatório)
 
 ```bash
 ./scripts/try_external_linters.sh <alvo>
 ```
 
-Nunca bloqueia o fluxo. Se `ktlint`/`detekt` já estiverem disponíveis (no `PATH` ou no
-cache local deste skill), roda-os de verdade e mostra a saída bruta — não tenta fundir
-com o JSON do scanner, é só leitura complementar. Se nenhuma ferramenta estiver
-disponível, o script imprime o comando exato de instalação (ex.:
-`scripts/install_external_linters.sh --only ktlint --yes`) e segue em frente sem
-bloquear. **Nunca rode esse comando de instalação por conta própria** — pergunte ao
-usuário primeiro (ver seção "O que sempre perguntar antes de fazer"). Se o usuário
-confirmar, `install_external_linters.sh` baixa os binários para um cache local
-(`~/.cache/jetpack-compose-refactor/tools/`) sem tocar no projeto-alvo; rode
-`try_external_linters.sh` de novo em seguida para usar as ferramentas recém-instaladas.
+Se `ktlint`/`detekt` ainda não estiverem disponíveis (nem no `PATH`, nem no cache local
+deste skill), instale-os automaticamente **sem pedir confirmação**, e então rode
+`try_external_linters.sh` de novo:
+
+```bash
+./scripts/install_external_linters.sh --yes
+./scripts/try_external_linters.sh <alvo>
+```
+
+`install_external_linters.sh --yes` baixa ktlint/detekt-cli + os jars do ruleset
+compose-rules para um cache local do usuário (`~/.cache/jetpack-compose-refactor/tools/`)
+— nunca toca no projeto-alvo, e as versões baixadas são fixas (ver constantes no topo
+do script), então o resultado é reproduzível entre execuções. Esse download roda uma
+única vez por máquina; runs seguintes já encontram tudo em cache e pulam direto para
+`try_external_linters.sh`.
+
+Nunca bloqueia o fluxo principal do skill: mesmo que o download falhe (rede
+indisponível, etc.), siga em frente com os findings do scanner só. A saída de
+`try_external_linters.sh` é bruta, direto do stdout de cada ferramenta — não é fundida
+com o JSON do scanner (ver passo 8, ela vai numa seção própria do relatório).
 
 ### 4. Carregar as referências relevantes
 
@@ -117,7 +125,10 @@ Ao final, reporte em duas listas sempre separadas:
    "`unstable-collection-param` em `Foo.tags: List<String>` exigiria adicionar
    `kotlinx-collections-immutable` — não adicionei a dependência sem confirmar, ver
    seção abaixo"). Essa lista é a mesma se o scanner rodar de novo no mesmo código.
-2. **Observações manuais (só se o passo 7 foi executado)** — rotulada explicitamente
+2. **Corroboração externa (ktlint/detekt, saída bruta do passo 3)** — sempre inclua,
+   já que o passo 3 agora é obrigatório; se nenhuma ferramenta estava disponível e o
+   download falhou, diga isso explicitamente em vez de omitir a seção.
+3. **Observações manuais (só se o passo 7 foi executado)** — rotulada explicitamente
    como não determinística, sem entrar na contagem acima.
 
 ## Índice de referências
@@ -163,8 +174,3 @@ texto de um finding.
 - **Mudar a assinatura pública de um composable** (parâmetros adicionados/removidos/
   reordenados) — sinalize antes de aplicar quando a mudança afeta call sites fora do
   arquivo que está sendo refatorado.
-- **Baixar/instalar ktlint/detekt/compose-rules externamente** (rodar
-  `scripts/install_external_linters.sh --yes`) — mesmo isolado no cache local do
-  usuário e sem tocar no projeto-alvo, é execução de binário de terceiros baixado da
-  internet. Pergunte antes, mesmo que `try_external_linters.sh` já tenha sugerido o
-  comando exato.

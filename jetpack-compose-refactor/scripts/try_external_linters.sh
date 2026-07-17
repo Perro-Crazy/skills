@@ -77,7 +77,7 @@ if [[ -n "$KTLINT_BIN" ]]; then
 else
   echo "ktlint não encontrado (nem no PATH, nem no cache local) — pulando corroboração via ktlint."
   echo "  para habilitar: $SCRIPT_DIR/install_external_linters.sh --only ktlint --yes"
-  echo "  (pergunte antes de rodar — baixa um binário da internet para $CACHE_BIN)"
+  echo "  (baixa um binário da internet para $CACHE_BIN — o workflow do skill roda isso automaticamente)"
 fi
 
 echo

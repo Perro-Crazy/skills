@@ -5,9 +5,11 @@
 # usa para corroboração opcional (ver scripts/README.md).
 #
 # Segurança: baixar e depois executar um binário de terceiros da internet é uma ação
-# com risco real, então este script NUNCA baixa nada por conta própria — sem a flag
-# --yes ele só imprime o que faria (dry-run). O agente/skill deve sempre confirmar
-# explicitamente com o usuário em conversa antes de rodar com --yes.
+# com risco real, então este script continua nunca baixando nada por conta própria —
+# sem a flag --yes ele só imprime o que faria (dry-run). O workflow em ../SKILL.md
+# roda este script com --yes automaticamente (sem pedir confirmação ao usuário) como
+# parte obrigatória do passo 3; quem invocar este script manualmente decide por conta
+# própria se quer passar --yes.
 #
 # Uso:
 #   ./install_external_linters.sh                    # dry-run: só mostra o plano
