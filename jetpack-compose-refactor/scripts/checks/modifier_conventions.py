@@ -16,6 +16,10 @@ def _find_modifier_param(fn):
     return None
 
 
+def _find_all_modifier_params(fn):
+    return [p for p in fn.params if p['type'].strip() == 'Modifier']
+
+
 def _body_emits_ui(fn):
     if not fn.body:
         return False
@@ -24,6 +28,18 @@ def _body_emits_ui(fn):
 
 def run(fn):
     findings = []
+
+    modifier_params_all = _find_all_modifier_params(fn)
+    if len(modifier_params_all) > 1:
+        names = ', '.join(p['name'] for p in modifier_params_all)
+        findings.append(make_finding(
+            fn, 'multiple-modifier-params',
+            f"'{fn.name}' declara {len(modifier_params_all)} parâmetros do tipo Modifier "
+            f"({names}) — a convenção é expor exatamente um parâmetro Modifier; resolva a "
+            f"necessidade de customizar múltiplas regiões internamente (ex.: via "
+            f"'.then(...)' em cada filho, ou compondo o layout de outro jeito)."
+        ))
+
     modifier_param = _find_modifier_param(fn)
 
     if modifier_param is None:
@@ -63,6 +79,17 @@ def run(fn):
                 f"deveria receber seu próprio encadeamento de Modifier, senão modificações por "
                 f"filho são perdidas).",
                 offset=matches[0].start(),
+            ))
+
+        then_re = re.compile(rf'\.then\s*\(\s*{re.escape(mod_name)}\s*\)')
+        for m in then_re.finditer(fn.body):
+            findings.append(make_finding(
+                fn, 'modifier-chain-order-risk',
+                f"'.then({mod_name})' encontrado — o '{mod_name}' recebido do chamador está "
+                f"sendo anexado ao FINAL da cadeia, o que inverte a precedência esperada. A "
+                f"convenção é aplicar o '{mod_name}' recebido primeiro na cadeia (ex.: "
+                f"'{mod_name}.background(...)'), não anexá-lo via '.then(...)' no final.",
+                offset=m.start(),
             ))
 
     return findings

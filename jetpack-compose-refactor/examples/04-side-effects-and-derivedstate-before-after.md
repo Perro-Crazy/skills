@@ -59,3 +59,33 @@ val showBackToTop by remember {
 quando cruza o threshold (de `0` para `1`, ou de volta). Sem `derivedStateOf`, tudo que
 lê `showBackToTop` recompõe a cada evento de scroll; com `derivedStateOf`, só recompõe
 quando o resultado derivado realmente muda.
+
+---
+
+## Bônus: `DisposableEffect` sem `onDispose`
+
+```kotlin
+// Antes — observer registrado, nunca removido
+@Composable
+fun ObserveLifecycle(lifecycleOwner: LifecycleOwner) {
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> /* ... */ }
+        lifecycleOwner.lifecycle.addObserver(observer)
+    }
+}
+
+// Depois
+@Composable
+fun ObserveLifecycle(lifecycleOwner: LifecycleOwner) {
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> /* ... */ }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+}
+```
+
+Sem `onDispose`, o `observer` registrado continua vivo mesmo depois que
+`ObserveLifecycle` sai de composição (ou quando o efeito é relançado por uma troca de
+`lifecycleOwner`) — um vazamento de observer que se acumula a cada entrada/saída de
+composição.

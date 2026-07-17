@@ -20,6 +20,10 @@ Limitações conhecidas (é um heurístico textual, não um parser Kotlin comple
 - Funções genéricas com a sintaxe `fun <T> Foo(...)` são reconhecidas; anotações
   muito incomuns ou macros de geração de código podem confundir a detecção de
   limites de função.
+- `find_viewmodel_classes` reconhece `class Foo : ViewModel()`/`AndroidViewModel(...)`/
+  `BaseViewModel()` pelo nome literal do supertipo escrito no próprio arquivo — não
+  resolve cadeias de herança entre arquivos (uma classe que estende uma base própria
+  que só indiretamente estende ViewModel não é detectada).
 Essas limitações são intencionais: o objetivo é sinalizar candidatos com boa
 precisão para revisão humana, não substituir um compilador/parser real.
 """
@@ -51,6 +55,9 @@ CHECK_MODULES = [
 
 FUN_RE = re.compile(r'(?<![\w.])fun\s+(?:<[^>]*>\s+)?(\w+)\s*\(')
 ANNOTATION_RE = re.compile(r'@([A-Za-z_][A-Za-z0-9_]*)(\([^)]*\))?')
+CLASS_RE = re.compile(r'(?<![\w.])class\s+(\w+)\b')
+CTOR_MODIFIER_RE = re.compile(r'\s*(private|public|internal|protected)?\s*(constructor\s*)?')
+VIEWMODEL_HERITAGE_RE = re.compile(r'\w*ViewModel\w*\s*\(')
 
 
 @dataclass
@@ -196,6 +203,66 @@ def find_composable_functions(text, file_path):
     return functions
 
 
+@dataclass
+class ViewModelClass:
+    file: str
+    name: str
+    header_line: int
+    body: str
+    body_start_offset: int
+    offsets: list
+
+
+def find_viewmodel_classes(text, file_path):
+    """Encontra classes com herança de *ViewModel* (androidx ViewModel, AndroidViewModel,
+    ou uma base própria como BaseViewModel — mesma heurística de substring já usada em
+    VIEWMODEL_TYPE_RE em checks/viewmodel_architecture.py). Não resolve cadeias de herança
+    entre arquivos: só reconhece o nome do supertipo direto escrito no próprio arquivo."""
+    offsets = build_line_offsets(text)
+    classes = []
+    for m in CLASS_RE.finditer(text):
+        name = m.group(1)
+        pos = m.end()
+
+        if pos < len(text) and text[pos] == '<':
+            close = find_matching(text, pos, '<', '>')
+            pos = close + 1 if close != -1 else pos
+
+        pos = CTOR_MODIFIER_RE.match(text, pos).end()
+
+        if pos < len(text) and text[pos] == '(':
+            # pula o construtor primário ANTES de procurar o '{' do corpo da classe —
+            # senão um parâmetro com lambda default (ex.: `onError: () -> Unit = {}`)
+            # é confundido com a abertura do corpo.
+            close_paren = find_matching(text, pos, '(', ')')
+            if close_paren == -1:
+                continue
+            pos = close_paren + 1
+
+        window = text[pos:pos + 500]
+        brace_rel = window.find('{')
+        if brace_rel == -1:
+            continue
+        header_tail = window[:brace_rel]
+        if ':' not in header_tail or not VIEWMODEL_HERITAGE_RE.search(header_tail):
+            continue
+
+        open_brace = pos + brace_rel
+        close_brace = find_matching(text, open_brace, '{', '}')
+        if close_brace == -1:
+            continue
+
+        classes.append(ViewModelClass(
+            file=file_path,
+            name=name,
+            header_line=line_number(offsets, m.start()),
+            body=text[open_brace + 1:close_brace],
+            body_start_offset=open_brace + 1,
+            offsets=offsets,
+        ))
+    return classes
+
+
 def load_rule_topic_map():
     map_path = Path(__file__).resolve().parent / 'rule_topic_map.json'
     with open(map_path, encoding='utf-8') as f:
@@ -209,6 +276,9 @@ def scan_file(path, rule_map):
     for fn in functions:
         for module in CHECK_MODULES:
             raw_findings.extend(module.run(fn))
+
+    for cls in find_viewmodel_classes(text, str(path)):
+        raw_findings.extend(viewmodel_architecture.run_class(cls))
 
     offsets = build_line_offsets(text)
     raw_findings.extend(modifier_conventions.run_file(text, str(path), offsets))

@@ -131,5 +131,75 @@
     "references_file": "references/lazy-list-performance.md",
     "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
     "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria"
+  },
+  "disposable-effect-missing-ondispose": {
+    "topic": "state-and-recomposition",
+    "severity": "warning",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/04-side-effects-and-derivedstate-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria, mesma família de launched-effect-key-risk (diretrizes oficiais de side-effects do Compose)"
+  },
+  "backwards-state-write": {
+    "topic": "state-and-recomposition",
+    "severity": "info",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/07-backwards-state-write-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria, inspirada no exemplo oficial 'BackwardsWrite' da documentação de bugs de estado do Compose"
+  },
+  "unmemoized-derived-collection": {
+    "topic": "state-and-recomposition",
+    "severity": "info",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/03-unstable-collections-and-remember-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria"
+  },
+  "composable-emit-and-return": {
+    "topic": "naming-and-api-shape",
+    "severity": "warning",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria"
+  },
+  "content-slot-param-naming": {
+    "topic": "naming-and-api-shape",
+    "severity": "info",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria"
+  },
+  "multiple-modifier-params": {
+    "topic": "modifier-conventions",
+    "severity": "warning",
+    "references_file": "references/modifier-conventions.md",
+    "examples_file": "examples/02-modifier-parameter-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria (formaliza a regra já documentada em references/modifier-conventions.md — exatamente um parâmetro Modifier — até agora sem checagem correspondente)"
+  },
+  "modifier-chain-order-risk": {
+    "topic": "modifier-conventions",
+    "severity": "info",
+    "references_file": "references/modifier-conventions.md",
+    "examples_file": "examples/02-modifier-parameter-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria"
+  },
+  "viewmodel-exposes-compose-state": {
+    "topic": "viewmodel-architecture",
+    "severity": "warning",
+    "references_file": "references/viewmodel-architecture.md",
+    "examples_file": "examples/08-viewmodel-compose-state-vs-stateflow-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria (primeira checagem do scanner a analisar corpo de classe, não de função @Composable)"
+  },
+  "viewmodel-multiple-state-holders": {
+    "topic": "viewmodel-architecture",
+    "severity": "info",
+    "references_file": "references/viewmodel-architecture.md",
+    "examples_file": "examples/08-viewmodel-compose-state-vs-stateflow-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria"
+  },
+  "lazy-item-modifier-not-hoisted": {
+    "topic": "lazy-list-performance",
+    "severity": "info",
+    "references_file": "references/lazy-list-performance.md",
+    "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria"
   }
 }

@@ -1,7 +1,7 @@
 # Performance de listas preguiçosas (`LazyColumn`/`LazyRow`/`LazyVerticalGrid`)
 
 Checagens do scanner que caem neste tópico: `lazy-items-missing-key`,
-`lazy-items-missing-content-type`.
+`lazy-items-missing-content-type`, `lazy-item-modifier-not-hoisted`.
 
 ## O caso canônico de "linter é necessário, mas não suficiente"
 
@@ -38,3 +38,24 @@ tipos).
 - Fix: `items(list, key = { ... }, contentType = { it.type }) { item -> ... }`.
 - Para listas homogêneas (todo item é do mesmo tipo/layout), esse ganho é marginal —
   priorize a correção de `key` ausente primeiro.
+
+## Cadeia de `Modifier` reconstruída a cada item
+
+Um `Modifier` (`Modifier.fillMaxWidth().padding(16.dp)` etc.) construído dentro do
+lambda de item de `items(...)`/`itemsIndexed(...)` que **não depende dos dados do
+item** é recriado do zero a cada item recomposto, mesmo sendo sempre idêntico — um
+candidato claro para ser hoisted para uma `val` declarada uma única vez fora do
+lambda. **Finding: `lazy-item-modifier-not-hoisted`** (severidade `info` — a checagem
+mais heurística deste tópico; ver limitações abaixo).
+- Sem regra de linter dedicada — checagem própria.
+- Fix: `val rowModifier = Modifier.fillMaxWidth().padding(16.dp)` declarado fora do
+  `items(...) { ... }`, reutilizado em cada item.
+- **Exceção que o scanner já exclui**: cadeias que usam funções dependentes do scope
+  do item (`.align(...)`, `.weight(...)`, `.matchParentSize()`, `.animateItem()`) não
+  podem ser hoisted mesmo sem depender do dado do item, pois exigem o receiver de
+  scope local (`BoxScope`/`RowScope`/`LazyItemScope`) — essas não são sinalizadas.
+- **Limitação conhecida**: o scanner só verifica se o **nome literal** do(s)
+  parâmetro(s) do item aparece na cadeia — uma variável local derivada do item
+  (`val cor = item.corPreferida; Modifier.background(cor)`) não é detectada como
+  dependência, e a cadeia pode ser sinalizada incorretamente como hoistable. Confirme
+  manualmente antes de mover.

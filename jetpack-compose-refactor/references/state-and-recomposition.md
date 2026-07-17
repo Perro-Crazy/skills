@@ -2,7 +2,8 @@
 
 Checagens do scanner que caem neste tópico: `unremembered-mutable-state`,
 `autoboxing-state-creation`, `unstable-collection-param`, `launched-effect-key-risk`,
-`composition-local-overuse`.
+`composition-local-overuse`, `disposable-effect-missing-ondispose`,
+`backwards-state-write`, `unmemoized-derived-collection`.
 
 ## `remember` vs `rememberSaveable` vs `derivedStateOf`
 
@@ -92,3 +93,53 @@ revisão manual).
 - Ao revisar: se o `CompositionLocal` carrega dado de negócio, prefira passá-lo como
   parâmetro explícito (hoisting) — mais fácil de testar, ter preview e rastrear de onde
   vem o valor.
+
+## `DisposableEffect` sem `onDispose`
+
+Todo `DisposableEffect(key) { ... }` precisa terminar devolvendo um
+`DisposableEffectResult`, e a única forma pública de construir um é `onDispose { }` —
+o bloco de limpeza chamado quando o efeito sai de composição ou é relançado (troca de
+key). Um `DisposableEffect` sem `onDispose` no corpo normalmente indica um recurso
+registrado (`addObserver`, listener, `BroadcastReceiver`) que nunca é liberado.
+**Finding: `disposable-effect-missing-ondispose`.**
+- Sem regra de linter dedicada — checagem própria, mesma família de
+  `launched-effect-key-risk` (diretrizes oficiais de side-effects do Compose).
+- Fix: sempre parear o registro de um recurso com sua liberação correspondente dentro
+  de `onDispose { }` (ex.: `addObserver`/`removeObserver`,
+  `registerReceiver`/`unregisterReceiver`).
+- Falso positivo conhecido: uma função auxiliar que constrói e devolve o
+  `DisposableEffectResult` em outro lugar (o texto `onDispose` não aparece
+  literalmente dentro deste bloco específico) — raro, mas confirme antes de assumir bug.
+
+## Escrita "para trás" em estado (loop de recomposição)
+
+Um `mutableStateOf`-backed (`var x by remember { mutableStateOf(...) }`) que é **lido**
+(ex.: usado num `Text`) e depois **escrito de novo** (`x = ...`, `x++`, etc.) no mesmo
+nível do corpo da função — fora de qualquer lambda de evento/efeito (`onClick`,
+`LaunchedEffect`, etc.) — dispara uma nova recomposição a cada vez que a função roda,
+e se a escrita não estiver condicionada a algo externo, isso é um loop de recomposição
+infinito. **Finding: `backwards-state-write`** (severidade `info` — heurístico de
+fluxo de controle baseado em profundidade de chaves, não uma prova; sempre confirme
+visualmente).
+- Sem regra de linter dedicada — checagem própria, inspirada no exemplo oficial
+  `BackwardsWrite` da documentação de bugs de estado do Compose.
+- Fix: mova a escrita para dentro de um callback (`onClick = { x++ }`), de forma que
+  ela só aconteça em resposta a um evento, não a cada execução do corpo do composable.
+- O scanner só reconhece a forma `var x by remember { mutableStateOf(...) }` — a forma
+  `val x = remember { mutableStateOf(...) }` + `x.value = ...` não é coberta ainda.
+
+## Transformação de coleção não memoizada
+
+Chamadas como `.sortedBy { }`, `.sortedWith(...)`, `.filter { }`, `.map { }` ou
+`.groupBy { }` feitas diretamente no corpo de um composable (inclusive dentro do
+lambda de item de uma `LazyColumn`) sem estarem envolvidas por `remember { }`
+recalculam a coleção inteira a cada recomposição, mesmo quando a entrada não mudou.
+**Finding: `unmemoized-derived-collection`** (severidade `info` — não dá para saber o
+tamanho real da coleção nem distinguir com certeza todo wrapper de efeito customizado;
+prioridade menor que os outros findings de `remember` ausente).
+- Sem regra de linter dedicada — checagem própria.
+- Fix: `val sorted = remember(products) { products.sortedBy { it.price } }`, usando
+  como key(s) do `remember` os valores dos quais o resultado realmente depende.
+- O scanner ignora esse padrão quando o cercamento imediato é `LaunchedEffect`/
+  `produceState` — ali a recomputação já é controlada pela key do efeito, não pela
+  recomposição.

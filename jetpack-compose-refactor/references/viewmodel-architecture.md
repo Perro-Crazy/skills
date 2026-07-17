@@ -1,7 +1,8 @@
 # Arquitetura ViewModel <-> Composable
 
 Checagens do scanner que caem neste tópico: `viewmodel-param-forwarding`,
-`viewmodel-injection-in-leaf`.
+`viewmodel-injection-in-leaf`, `viewmodel-exposes-compose-state`,
+`viewmodel-multiple-state-holders`.
 
 ## O princípio unificador: separação stateful/stateless
 
@@ -56,3 +57,47 @@ uma única aquisição na tela, estado e callbacks hoisted para baixo. Ao revisa
 projeto CMP, procure pelo equivalente local de "adquirir ViewModel" (pode ser uma
 função customizada do projeto) e aplique o mesmo raciocínio de
 `viewmodel-injection-in-leaf` mesmo que o scanner não reconheça o nome da função.
+
+## Nota de implementação: as duas checagens abaixo analisam a classe, não a função
+
+`viewmodel-exposes-compose-state` e `viewmodel-multiple-state-holders` são as
+primeiras checagens do scanner que **não** operam sobre o corpo de uma função
+`@Composable` — elas escaneiam o corpo de uma `class Foo : ViewModel()` (ou
+`AndroidViewModel(...)`/uma base própria como `BaseViewModel()`) diretamente, via
+`find_viewmodel_classes()` em `scan_compose_components.py`, e são despachadas por
+`viewmodel_architecture.run_class(cls)` (um caminho de código paralelo ao `run(fn)`
+usado por todas as outras checagens deste scanner). Isso importa na hora de debugar um
+finding inesperado: o `line`/`offset` desses dois checkIds é sempre relativo ao início
+do **corpo da classe**, não de uma função.
+
+## ViewModel expondo estado do runtime do Compose
+
+Um `ViewModel` que expõe publicamente uma property tipada `State<T>`/`MutableState<T>`
+(ou inicializada via `mutableStateOf(...)`/`mutableIntStateOf(...)`/etc.) acopla o
+ViewModel ao runtime do Compose — o padrão recomendado é manter o estado internamente
+como `MutableStateFlow`, privado (`_nome`), e expor publicamente só a versão
+somente-leitura via `StateFlow` (`.asStateFlow()`), consumida no composable via
+`collectAsStateWithLifecycle()`. Isso mantém o ViewModel testável e reutilizável fora
+do Compose (ex.: em testes de unidade puro-Kotlin, ou se a UI migrar de framework).
+**Finding: `viewmodel-exposes-compose-state`.**
+- Sem regra de linter dedicada — checagem própria (primeira checagem de nível de
+  classe deste scanner; ver nota acima).
+- Fix: `private val _nome = MutableStateFlow(valorInicial)` +
+  `val nome: StateFlow<T> = _nome.asStateFlow()`.
+- O scanner só analisa properties de nível de classe fora de funções/blocos aninhados
+  (`private` já é excluído por não ser "exposto publicamente"); não resolve tipos que
+  vêm de uma função auxiliar (`val nome = criarEstado()`), só o texto literal do tipo
+  ou do construtor usado na declaração.
+
+## Múltiplas properties de estado separadas em vez de um `UiState` único
+
+Um ViewModel que expõe mais de uma property pública `StateFlow<T>`/`State<T>`/
+`LiveData<T>` para a mesma tela tende a ser mais difícil de manter em sincronia (cada
+consumidor precisa combinar os streams manualmente) do que um único
+`data class XxxUiState(...)` exposto como fonte única de verdade. **Finding:
+`viewmodel-multiple-state-holders`** (severidade `info` — ViewModels com múltiplos
+streams genuinamente independentes existem; é um padrão sugerido, não uma regra
+rígida).
+- Sem regra de linter dedicada — checagem própria.
+- Fix: consolide as properties relacionadas num único `data class XxxUiState` e exponha
+  um único `StateFlow<XxxUiState>`.

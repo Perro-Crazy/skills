@@ -2,7 +2,7 @@
 
 Checagens do scanner que caem neste tópico: `modifier-param-missing`,
 `modifier-param-no-default`, `modifier-param-wrong-name`, `modifier-reused`,
-`modifier-composed-deprecated`.
+`modifier-composed-deprecated`, `multiple-modifier-params`, `modifier-chain-order-risk`.
 
 ## Por que a convenção existe
 
@@ -17,7 +17,8 @@ mas não aceita `Modifier` de fora não pode ser reutilizado em contextos difere
 1. **Exatamente um parâmetro `Modifier`**, nunca dois ou mais — se o composable
    precisa aplicar modificadores diferentes a partes internas diferentes, isso deve
    ser resolvido internamente (`modifier.then(...)` em pontos específicos), não com
-   múltiplos parâmetros `Modifier` na assinatura pública.
+   múltiplos parâmetros `Modifier` na assinatura pública. **Finding:
+   `multiple-modifier-params`.**
 2. **Nomeado exatamente `modifier`** — não `mod`, `modif`, `containerModifier`, etc.
    **Finding: `modifier-param-wrong-name`** (mirrors: detekt/ktlint compose-rules
    `ModifierNaming`).
@@ -69,3 +70,17 @@ mesma anotada `@Composable`).
   `Modifier.Node`. Para modificadores existentes usando `composed { }` que já
   funcionam bem, migrar é uma melhoria de performance, não uma correção de bug — priorize
   conforme o impacto (uso em listas grandes/recomposição frequente pesa mais).
+
+## Ordem de encadeamento do `modifier` recebido
+
+O `modifier` recebido do chamador deveria normalmente ser o **início** da cadeia
+aplicada ao elemento raiz (`modifier.background(...).padding(...)`), não anexado ao
+final via `.then(...)` (`Modifier.background(...).then(modifier)`). Quando o
+`modifier` do chamador é anexado por último, os modificadores internos do componente
+são aplicados primeiro, invertendo a precedência esperada — o chamador normalmente
+espera poder sobrepor/ajustar o que o componente já aplica, não o contrário. **Finding:
+`modifier-chain-order-risk`** (severidade `info` — o scanner só reconhece o padrão
+textual literal `.then(<nome-do-parâmetro-modifier>)`; não analisa a cadeia inteira).
+- Sem regra de linter dedicada — checagem própria.
+- Fix: reordene para que o `modifier` recebido seja o receiver inicial da cadeia:
+  `modifier.background(...)` em vez de `Modifier.background(...).then(modifier)`.

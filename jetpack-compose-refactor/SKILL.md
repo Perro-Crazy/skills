@@ -135,11 +135,11 @@ Ao final, reporte em duas listas sempre separadas:
 
 | Tópico | Arquivo | Quando abrir |
 |---|---|---|
-| Estado e recomposição | `references/state-and-recomposition.md` | findings: `unremembered-mutable-state`, `autoboxing-state-creation`, `unstable-collection-param`, `launched-effect-key-risk`, `composition-local-overuse` |
-| Convenções de Modifier | `references/modifier-conventions.md` | findings: `modifier-param-missing`, `modifier-param-no-default`, `modifier-param-wrong-name`, `modifier-reused`, `modifier-composed-deprecated` |
-| Naming e forma de API | `references/naming-and-api-shape.md` | findings: `composable-naming`, `event-callback-naming`, `param-ordering`, `multiple-content-emitters`, `preview-naming-visibility` |
-| Arquitetura ViewModel | `references/viewmodel-architecture.md` | findings: `viewmodel-param-forwarding`, `viewmodel-injection-in-leaf` |
-| Performance de listas preguiçosas | `references/lazy-list-performance.md` | findings: `lazy-items-missing-key`, `lazy-items-missing-content-type` — essas duas checagens só existem no scanner deste skill (nenhum Android Lint/ktlint/detekt cobre isso hoje); abra este arquivo sempre que o scanner reportar um desses dois findings, mesmo que ferramentas externas não tenham achado nada |
+| Estado e recomposição | `references/state-and-recomposition.md` | findings: `unremembered-mutable-state`, `autoboxing-state-creation`, `unstable-collection-param`, `launched-effect-key-risk`, `composition-local-overuse`, `disposable-effect-missing-ondispose`, `backwards-state-write`, `unmemoized-derived-collection` |
+| Convenções de Modifier | `references/modifier-conventions.md` | findings: `modifier-param-missing`, `modifier-param-no-default`, `modifier-param-wrong-name`, `modifier-reused`, `modifier-composed-deprecated`, `multiple-modifier-params`, `modifier-chain-order-risk` |
+| Naming e forma de API | `references/naming-and-api-shape.md` | findings: `composable-naming`, `event-callback-naming`, `param-ordering`, `multiple-content-emitters`, `preview-naming-visibility`, `composable-emit-and-return`, `content-slot-param-naming` |
+| Arquitetura ViewModel | `references/viewmodel-architecture.md` | findings: `viewmodel-param-forwarding`, `viewmodel-injection-in-leaf`, `viewmodel-exposes-compose-state`, `viewmodel-multiple-state-holders` — as duas últimas analisam o corpo da classe `ViewModel` diretamente, não uma função `@Composable` (ver nota de implementação no arquivo) |
+| Performance de listas preguiçosas | `references/lazy-list-performance.md` | findings: `lazy-items-missing-key`, `lazy-items-missing-content-type`, `lazy-item-modifier-not-hoisted` — nenhuma das três tem cobertura em Android Lint/ktlint/detekt hoje; abra este arquivo sempre que o scanner reportar algum desses findings, mesmo que ferramentas externas não tenham achado nada |
 | Glossário Android Lint | `references/android-lint-compose-rules.md` | proveniência — qual regra real cada checagem espelha |
 | Glossário ktlint compose-rules | `references/ktlint-compose-rules.md` | proveniência |
 | Glossário detekt compose-rules | `references/detekt-compose-rules.md` | proveniência |

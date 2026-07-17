@@ -2,7 +2,7 @@
 
 Checagens do scanner que caem neste tópico: `composable-naming`,
 `event-callback-naming`, `param-ordering`, `multiple-content-emitters`,
-`preview-naming-visibility`.
+`preview-naming-visibility`, `composable-emit-and-return`, `content-slot-param-naming`.
 
 ## Naming de composables
 
@@ -68,3 +68,30 @@ esses elementos se organizam entre si. **Finding: `multiple-content-emitters`**
   claro na navegação do projeto e em buscas que aquela função não é um composable de
   produção.
 - Mirrors: detekt/ktlint compose-rules `ComposePreviewNaming`, `ComposePreviewPublic`.
+
+## Emitir UI XOR devolver valor
+
+As guidelines oficiais de API do Compose são explícitas: um composable deve **ou**
+emitir UI (nesse caso, retorna `Unit`) **ou** calcular e devolver um valor — nunca os
+dois na mesma função. Misturar os dois torna o composable difícil de testar (o valor
+de retorno só existe se a função também compuser UI) e quebra a expectativa de quem
+chama, que não espera precisar "descartar" um valor de retorno de algo que parece só
+desenhar a tela. **Finding: `composable-emit-and-return`** — dispara quando o tipo de
+retorno não é `Unit`/vazio e o corpo também chama pelo menos um componente de UI
+conhecido no nível raiz.
+- Sem regra de linter dedicada — checagem própria.
+- Fix: separe as duas responsabilidades — um composable que só emite UI, e uma função
+  Kotlin comum (não `@Composable`) que calcula o valor, chamada por quem precisar dele.
+
+## Naming do parâmetro de slot de conteúdo
+
+Quando um composable expõe exatamente um parâmetro de slot de conteúdo `@Composable`
+(uma lambda trailing usada para permitir customização do conteúdo interno), a
+convenção é nomeá-lo `content` — o mesmo padrão usado pelos componentes do Material/
+Foundation (`Box(content: @Composable BoxScope.() -> Unit)`, `Card(content: ...)`
+etc.). **Finding: `content-slot-param-naming`** (severidade `info`).
+- Sem regra de linter dedicada — checagem própria.
+- Exceção conhecida e legítima: nomes específicos de contexto, como `itemContent` em
+  wrappers de listas (`LazyColumn`), continuam fora do allowlist atual de nomes de
+  slot — o finding dispara mesmo assim, mas confirme antes de renomear, já que nesses
+  casos o nome específico costuma ser mais claro que `content` genérico.

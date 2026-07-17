@@ -99,6 +99,7 @@ def run(fn):
                 ))
                 break
 
+    content_slot_params = []
     if fn.params:
         last = fn.params[-1]
         content_slot_params = [p for p in fn.params if _is_content_slot_param(p)]
@@ -111,6 +112,15 @@ def run(fn):
                 f"permitir a sintaxe de trailing lambda no call site."
             ))
 
+    if len(content_slot_params) == 1 and content_slot_params[0]['name'] not in CONTENT_PARAM_NAMES:
+        p = content_slot_params[0]
+        findings.append(make_finding(
+            fn, 'content-slot-param-naming',
+            f"Parâmetro de slot de conteúdo '{p['name']}: {p['type']}' — a convenção é nomear "
+            f"o único slot de conteúdo trailing como 'content' (nomes como 'itemContent' de "
+            f"wrappers de lista são uma exceção legítima; confirme antes de renomear)."
+        ))
+
     if fn.body:
         top_level_calls = _count_top_level_emitters(fn.body)
         has_slot_param = any(_is_content_slot_param(p) for p in fn.params)
@@ -120,6 +130,15 @@ def run(fn):
                 f"'{fn.name}' emite {top_level_calls} componentes de UI no nível raiz sem expor "
                 f"parâmetros de slot — envolva em um único container (Row/Column/Box) ou exponha "
                 f"slots nomeados em vez de deixar múltiplos emissores soltos."
+            ))
+
+        if not is_unit_return and top_level_calls >= 1:
+            findings.append(make_finding(
+                fn, 'composable-emit-and-return',
+                f"'{fn.name}' retorna '{fn.return_type.strip()}' mas também emite UI no nível "
+                f"raiz — um composable deve ou emitir UI (retornando Unit) ou calcular e "
+                f"devolver um valor, nunca os dois (regra 'emit XOR return value' das "
+                f"guidelines oficiais de API do Compose)."
             ))
 
     return findings

@@ -56,3 +56,31 @@ Se adicionar `kotlinx-collections-immutable` ao projeto não for uma opção ime
 (nova dependência precisa de aprovação do time), a alternativa é envolver `tags` num
 data class anotado `@Immutable` que contenha a lista internamente — resolve a
 instabilidade sem precisar da biblioteca externa.
+
+---
+
+## Bônus: transformação de coleção não memoizada
+
+```kotlin
+// Antes — resorted a cada recomposição
+@Composable
+fun ProductList(products: ImmutableList<Product>, modifier: Modifier = Modifier) {
+    LazyColumn(modifier = modifier) {
+        items(products.sortedBy { it.price }, key = { it.id }) { p -> ProductRow(p) }
+    }
+}
+
+// Depois
+@Composable
+fun ProductList(products: ImmutableList<Product>, modifier: Modifier = Modifier) {
+    val sorted = remember(products) { products.sortedBy { it.price } }
+    LazyColumn(modifier = modifier) {
+        items(sorted, key = { it.id }) { p -> ProductRow(p) }
+    }
+}
+```
+
+`products.sortedBy { it.price }` direto no corpo recria a lista ordenada inteira a
+cada recomposição, mesmo quando `products` não mudou. Envolver em
+`remember(products) { ... }` garante que a ordenação só roda de novo quando `products`
+de fato muda.

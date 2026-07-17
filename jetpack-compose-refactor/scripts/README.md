@@ -51,9 +51,16 @@ opcionalmente, `bash` + ktlint/detekt já instalados no ambiente.
    `fun <T> Nome(...)`), capturando assinatura, lista de parâmetros e — quando o
    corpo é um bloco `{ ... }` — o texto do corpo via um contador de profundidade de
    chaves que ignora chaves dentro de strings/comentários.
-2. Cada módulo em `checks/` roda contra essa representação (`ComposableFunction`) e
-   devolve uma lista de findings crus `{file, line, checkId, message}`.
-3. `rule_topic_map.json` enriquece cada finding com `topic` (para saber qual
+2. Localiza também cada `class Nome(...) : ...ViewModel...` (androidx `ViewModel`,
+   `AndroidViewModel`, ou uma base própria como `BaseViewModel` — via
+   `find_viewmodel_classes`), capturando o corpo da classe da mesma forma. Esse é o
+   único caminho de código que analisa uma classe em vez de uma função `@Composable`
+   — usado só pelas duas checagens de nível de classe em `viewmodel_architecture.py`
+   (`viewmodel-exposes-compose-state`, `viewmodel-multiple-state-holders`), via
+   `run_class(cls)` em vez do `run(fn)` usado por todas as outras checagens.
+3. Cada módulo em `checks/` roda contra essas representações (`ComposableFunction`/
+   `ViewModelClass`) e devolve uma lista de findings crus `{file, line, checkId, message}`.
+4. `rule_topic_map.json` enriquece cada finding com `topic` (para saber qual
    `references/*.md` consultar), `severity`, e `mirrors` (qual regra real de
    Android Lint/ktlint/detekt inspirou aquela checagem, quando existe uma).
 
@@ -65,6 +72,9 @@ Limitações conhecidas, documentadas também no docstring do próprio script:
   sempre revise antes de agir sobre um finding, especialmente os marcados `severity: info`.
 - Genéricos aninhados combinando `<...>` com tipos função (`Map<String, () -> Unit>`)
   podem confundir a separação de parâmetros por vírgula em casos raros.
+- `find_viewmodel_classes` reconhece o supertipo pelo nome literal escrito no próprio
+  arquivo — não resolve cadeias de herança entre arquivos (uma classe que estende uma
+  base própria que só indiretamente estende `ViewModel` não é detectada).
 
 ## Degradação graciosa
 
