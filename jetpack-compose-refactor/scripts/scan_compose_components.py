@@ -43,6 +43,7 @@ from checks import (  # noqa: E402
     naming_and_api_shape,
     viewmodel_architecture,
     lazy_list_performance,
+    accessibility,
 )
 
 CHECK_MODULES = [
@@ -51,6 +52,7 @@ CHECK_MODULES = [
     naming_and_api_shape,
     viewmodel_architecture,
     lazy_list_performance,
+    accessibility,
 ]
 
 FUN_RE = re.compile(r'(?<![\w.])fun\s+(?:<[^>]*>\s+)?(\w+)\s*\(')
@@ -73,6 +75,7 @@ class ComposableFunction:
     is_private: bool
     offsets: list
     params: list = field(default_factory=list)
+    sibling_unstable_classes: set = field(default_factory=set)
 
 
 def parse_param(param_str):
@@ -153,7 +156,14 @@ def find_composable_functions(text, file_path):
 
         back_start = max(0, fun_start - 400)
         preceding = text[back_start:fun_start]
-        cut_idx = max(preceding.rfind('}'), preceding.rfind(';'))
+        # corta no fim da declaração anterior para não herdar suas anotações: além de
+        # '}'/';', considera linha em branco e palavras-chave de declaração (uma
+        # `annotation class X` sem corpo, por exemplo, não termina em '}' e deixaria
+        # seu '@Preview'/'@Composable' vazar para a próxima função).
+        cut_candidates = [preceding.rfind('}'), preceding.rfind(';'), preceding.rfind('\n\n')]
+        for kw in re.finditer(r'\b(class|object|interface|enum)\b', preceding):
+            cut_candidates.append(kw.end())
+        cut_idx = max(cut_candidates)
         header_prefix = preceding[cut_idx + 1:] if cut_idx != -1 else preceding
         annotation_names = [a[0] for a in ANNOTATION_RE.findall(header_prefix)]
         if 'Composable' not in annotation_names:
@@ -263,6 +273,34 @@ def find_viewmodel_classes(text, file_path):
     return classes
 
 
+VAR_IN_CTOR_RE = re.compile(r'\bvar\s+\w+')
+
+
+def find_unstable_classes(text):
+    """Retorna o conjunto de nomes de classes cujo construtor primário declara ao menos
+    uma propriedade `var` — o compilador do Compose trata qualquer classe com `var` (o
+    Compose só rastreia mutações de `State`) como instável, `data class` ou não. Usado
+    pela checagem mutable-class-param para cruzar contra os tipos dos parâmetros dos
+    composables do mesmo arquivo (não resolve tipos entre arquivos)."""
+    names = set()
+    for m in CLASS_RE.finditer(text):
+        name = m.group(1)
+        pos = m.end()
+        if pos < len(text) and text[pos] == '<':
+            close = find_matching(text, pos, '<', '>')
+            pos = close + 1 if close != -1 else pos
+        pos = CTOR_MODIFIER_RE.match(text, pos).end()
+        if pos >= len(text) or text[pos] != '(':
+            continue
+        close_paren = find_matching(text, pos, '(', ')')
+        if close_paren == -1:
+            continue
+        ctor = text[pos + 1:close_paren]
+        if VAR_IN_CTOR_RE.search(ctor):
+            names.add(name)
+    return names
+
+
 def load_rule_topic_map():
     map_path = Path(__file__).resolve().parent / 'rule_topic_map.json'
     with open(map_path, encoding='utf-8') as f:
@@ -272,8 +310,10 @@ def load_rule_topic_map():
 def scan_file(path, rule_map):
     text = path.read_text(encoding='utf-8', errors='replace')
     functions = find_composable_functions(text, str(path))
+    unstable_classes = find_unstable_classes(text)
     raw_findings = []
     for fn in functions:
+        fn.sibling_unstable_classes = unstable_classes
         for module in CHECK_MODULES:
             raw_findings.extend(module.run(fn))
 
@@ -282,6 +322,8 @@ def scan_file(path, rule_map):
 
     offsets = build_line_offsets(text)
     raw_findings.extend(modifier_conventions.run_file(text, str(path), offsets))
+    raw_findings.extend(state_and_recomposition.run_file(text, str(path), offsets))
+    raw_findings.extend(naming_and_api_shape.run_file(text, str(path), offsets))
 
     enriched = []
     for finding in raw_findings:

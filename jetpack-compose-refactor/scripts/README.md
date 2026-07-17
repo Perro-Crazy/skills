@@ -58,23 +58,32 @@ opcionalmente, `bash` + ktlint/detekt já instalados no ambiente.
    — usado só pelas duas checagens de nível de classe em `viewmodel_architecture.py`
    (`viewmodel-exposes-compose-state`, `viewmodel-multiple-state-holders`), via
    `run_class(cls)` em vez do `run(fn)` usado por todas as outras checagens.
-3. Cada módulo em `checks/` roda contra essas representações (`ComposableFunction`/
-   `ViewModelClass`) e devolve uma lista de findings crus `{file, line, checkId, message}`.
-4. `rule_topic_map.json` enriquece cada finding com `topic` (para saber qual
+3. Além das duas varreduras por-declaração acima, computa dois contextos de nível de
+   arquivo: `find_unstable_classes` (nomes de classes com propriedade `var` no
+   construtor, injetados em cada `ComposableFunction.sibling_unstable_classes` para a
+   checagem `mutable-class-param`) e os imports (para `material2-usage`).
+4. Cada módulo em `checks/` roda contra essas representações (`ComposableFunction`/
+   `ViewModelClass`) via `run(fn)`/`run_class(cls)`, e alguns módulos também expõem um
+   `run_file(text, file_path, offsets)` para checagens de nível de arquivo que não vivem
+   dentro de um composable (naming de CompositionLocal, `@Immutable`+`var`, naming de
+   annotation classes, Material 2). Todos devolvem findings crus
+   `{file, line, checkId, message}`.
+5. `rule_topic_map.json` enriquece cada finding com `topic` (para saber qual
    `references/*.md` consultar), `severity`, e `mirrors` (qual regra real de
    Android Lint/ktlint/detekt inspirou aquela checagem, quando existe uma).
 
 Limitações conhecidas, documentadas também no docstring do próprio script:
 - Composables com corpo em forma de expressão (`fun Foo() = ...`) só passam pelas
   checagens de assinatura (naming, ordenação de parâmetros, Modifier), não pelas que
-  dependem do corpo (remember, LaunchedEffect, listas preguiçosas etc.).
+  dependem do corpo (remember, LaunchedEffect, acessibilidade, listas preguiçosas etc.).
 - "Emissores de UI no nível raiz" e "reuso de Modifier" são heurísticas textuais —
   sempre revise antes de agir sobre um finding, especialmente os marcados `severity: info`.
 - Genéricos aninhados combinando `<...>` com tipos função (`Map<String, () -> Unit>`)
   podem confundir a separação de parâmetros por vírgula em casos raros.
-- `find_viewmodel_classes` reconhece o supertipo pelo nome literal escrito no próprio
-  arquivo — não resolve cadeias de herança entre arquivos (uma classe que estende uma
-  base própria que só indiretamente estende `ViewModel` não é detectada).
+- `find_viewmodel_classes` e `find_unstable_classes` reconhecem os tipos pelo nome
+  literal escrito no próprio arquivo — não resolvem herança nem tipos entre arquivos
+  (uma classe instável importada de outro módulo não é detectada como parâmetro
+  instável, por exemplo).
 
 ## Degradação graciosa
 
@@ -122,5 +131,6 @@ scripts/
     ├── modifier_conventions.py
     ├── naming_and_api_shape.py
     ├── viewmodel_architecture.py
-    └── lazy_list_performance.py
+    ├── lazy_list_performance.py
+    └── accessibility.py
 ```

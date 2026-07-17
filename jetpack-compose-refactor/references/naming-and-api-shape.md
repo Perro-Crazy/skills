@@ -2,7 +2,10 @@
 
 Checagens do scanner que caem neste tópico: `composable-naming`,
 `event-callback-naming`, `param-ordering`, `multiple-content-emitters`,
-`preview-naming-visibility`, `composable-emit-and-return`, `content-slot-param-naming`.
+`preview-naming-visibility`, `composable-emit-and-return`, `content-slot-param-naming`,
+`event-trailing-lambda`, `scaffold-padding-ignored`, `boxwithconstraints-unused-scope`,
+`animatedcontent-unused-target`, `composable-annotation-naming`,
+`preview-annotation-naming`, `material2-usage`.
 
 ## Naming de composables
 
@@ -95,3 +98,58 @@ etc.). **Finding: `content-slot-param-naming`** (severidade `info`).
   wrappers de listas (`LazyColumn`), continuam fora do allowlist atual de nomes de
   slot — o finding dispara mesmo assim, mas confirme antes de renomear, já que nesses
   casos o nome específico costuma ser mais claro que `content` genérico.
+
+## Callback de evento como trailing lambda
+
+A trailing lambda (último parâmetro) deve ser reservada para o **slot de conteúdo**
+`@Composable`, porque no call site ela vira o bloco `{ }` após a chamada. Um callback
+de evento (`onClick: () -> Unit`) na última posição, **depois** do `modifier`, ocupa
+esse lugar e faz o call site parecer que aceita conteúdo (`MyButton("x") { ... }`
+parece um slot de conteúdo, mas é o `onClick`). **Finding: `event-trailing-lambda`**
+(severidade `info`; o scanner sinaliza quando o último parâmetro é uma lambda de evento
+não-`@Composable` com nome `on*` e existe um parâmetro `modifier` antes dele).
+- Mirrors: ktlint/detekt compose-rules `LambdaParameterEventTrailing`.
+- Fix: mova o evento para junto dos parâmetros obrigatórios, antes do `modifier`.
+
+## Slots que ignoram o valor fornecido
+
+Alguns componentes entregam um valor ao lambda de conteúdo que **precisa** ser usado —
+ignorá-lo é um bug:
+
+- **`Scaffold`/`BottomSheetScaffold`** entregam um `PaddingValues` que representa o
+  espaço ocupado por `topBar`/`bottomBar`. Se o lambda de conteúdo não o aplica (ex.:
+  `Modifier.padding(innerPadding)`), o conteúdo fica **atrás** das barras. **Finding:
+  `scaffold-padding-ignored`** (severidade `warning`; o scanner sinaliza quando o lambda
+  de conteúdo não captura o parâmetro, ou o captura e não o referencia).
+  - Mirrors: Android Lint `UnusedMaterial3ScaffoldPaddingParameter`.
+- **`AnimatedContent`** entrega o `targetState` ao lambda; usar a variável externa em
+  vez do parâmetro recebido faz o conteúdo animado renderizar o estado errado durante a
+  transição. **Finding: `animatedcontent-unused-target`** (severidade `warning`).
+  - Mirrors: Android Lint `UnusedContentLambdaTargetStateParameter`.
+- **`BoxWithConstraints`** expõe `constraints`/`maxWidth`/`maxHeight`/... — se o corpo
+  não os usa, um `Box` comum é mais barato (`BoxWithConstraints` adia a composição do
+  conteúdo até a medição). **Finding: `boxwithconstraints-unused-scope`** (severidade
+  `info`).
+  - Mirrors: Android Lint `UnusedBoxWithConstraintsScope`.
+
+## Naming de annotation classes
+
+- **Annotation de multipreview** (uma `annotation class` que agrega vários `@Preview`)
+  deve usar o prefixo `Preview` (ex.: `PreviewScreenSizes`). **Finding:
+  `preview-annotation-naming`** (severidade `info`).
+  - Mirrors: ktlint/detekt compose-rules `PreviewAnnotationNaming`.
+- **Annotation marcada com `@Composable`** deve terminar com o sufixo `Composable`.
+  **Finding: `composable-annotation-naming`** (severidade `info`).
+  - Mirrors: ktlint/detekt compose-rules `ComposableAnnotationNaming`.
+
+## Material 2 num projeto Material 3
+
+Import de `androidx.compose.material.*` (Material 2, excluindo os subpacotes `icons`/
+`ripple`/`pullrefresh`) num projeto que usa Material 3 mistura dois design systems —
+inconsistência visual e de tema. **Finding: `material2-usage`** (severidade `info`;
+checagem de nível de arquivo, sobre os imports; é opt-in no compose-rules upstream, mas
+aqui é sinalizada como `info` para revisão).
+- Mirrors: ktlint/detekt compose-rules `Material2` (`compose:material-two`); Android
+  Lint `UsingMaterialAndMaterial3Libraries`.
+- Fix: use o equivalente em `androidx.compose.material3`. Se a migração para M3 ainda
+  não é viável, é uma decisão de projeto — não troque imports sem confirmar.

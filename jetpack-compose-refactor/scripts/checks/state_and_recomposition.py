@@ -4,7 +4,7 @@ Ver references/state-and-recomposition.md para o racional completo de cada regra
 """
 import re
 
-from . import make_finding, find_matching
+from . import make_finding, find_matching, line_number
 
 MUTABLE_STATE_RE = re.compile(r'mutableStateOf\s*(<[^>]*>)?\s*\(')
 TYPED_NUMERIC_RE = re.compile(r'mutableStateOf\s*<\s*(Int|Float|Long)\s*>\s*\(')
@@ -19,6 +19,42 @@ STATE_OF_HINT_RE = re.compile(r'mutable\w*StateOf\s*\(')
 WRITE_OP_RE = re.compile(r'\s*(=(?!=)|\+\+|--|\+=|-=|\*=|/=)')
 COLLECTION_TRANSFORM_RE = re.compile(r'\.(sortedWith|sortedBy|sorted|filter|map|groupBy)\s*[({]')
 EFFECT_WRAPPER_NAMES = {'LaunchedEffect', 'produceState'}
+
+COROUTINE_BUILDER_RE = re.compile(r'\b(launch|async)\s*[({]')
+FLOW_OPERATOR_RE = re.compile(
+    r'\.(map|mapLatest|filter|filterNot|onEach|combine|zip|flowOn|distinctUntilChanged|'
+    r'debounce|transform|flatMapLatest|flatMapConcat|flatMapMerge|scan|drop|take|'
+    r'conflate|buffer|sample)\s*[({]'
+)
+COLLECT_AS_STATE_RE = re.compile(r'\.collectAsState\s*\(')
+MUTABLE_COLLECTION_IN_STATE_RE = re.compile(
+    r'mutableStateOf\s*\(\s*(mutableListOf|mutableSetOf|mutableMapOf|arrayListOf|'
+    r'hashMapOf|hashSetOf|linkedMapOf|linkedSetOf|ArrayList|HashMap|HashSet|'
+    r'LinkedList|LinkedHashMap|LinkedHashSet)\b'
+)
+UNREMEMBERED_OBJECT_RE = re.compile(
+    r'(?<![.\w])(Animatable|MutableInteractionSource|movableContentOf|'
+    r'movableContentWithReceiverOf|TextFieldState|FocusRequester|BringIntoViewRequester)\s*\('
+)
+
+# Tipos de parâmetro instáveis para o compilador do Compose (módulos externos onde o
+# compilador Compose não roda) — lista conservadora de tipos claramente mutáveis/externos.
+UNSTABLE_PARAM_TYPES = {
+    'Date', 'Calendar', 'GregorianCalendar', 'LocalDateTime', 'LocalDate', 'LocalTime',
+    'Instant',
+}
+# Tipos de estado do runtime do Compose que não deveriam ser parâmetros de composable
+# (posse dividida do estado — prefira value: T + onValueChange: (T) -> Unit).
+MUTABLE_STATE_PARAM_TYPES = {
+    'MutableState', 'MutableIntState', 'MutableLongState', 'MutableFloatState',
+    'MutableDoubleState', 'SnapshotStateList', 'SnapshotStateMap',
+}
+
+COMPOSITION_LOCAL_DECL_RE = re.compile(
+    r'\bval\s+(\w+)\s*(?::[^=\n]*)?=\s*'
+    r'(?:staticCompositionLocalOf|compositionLocalOf|compositionLocalWithComputedDefaultOf)\b'
+)
+STABILITY_ANNOTATION_RE = re.compile(r'@(Immutable|Stable)\b')
 
 # CompositionLocals de plataforma cujo uso é uma preocupação transversal legítima
 # (tema, densidade, lifecycle) — não vale a pena sinalizar esses.
@@ -35,6 +71,22 @@ def _prev_nonspace_char(text, pos):
     while i >= 0 and text[i] in ' \t\n':
         i -= 1
     return text[i] if i >= 0 else ''
+
+
+def _brace_depth(text, pos):
+    """Profundidade de chaves de text[:pos] por contagem simples de '{'/'}' (mesmo nível
+    de precisão dos outros heurísticos deste módulo — não ignora strings/comentários)."""
+    prefix = text[:pos]
+    return prefix.count('{') - prefix.count('}')
+
+
+def _root_type(type_str):
+    """Extrai o nome-raiz de um tipo: remove nullability, argumentos genéricos e o
+    qualificador de pacote — ex.: 'java.util.Date?' -> 'Date', 'List<Foo>' -> 'List'."""
+    t = type_str.strip().rstrip('?').strip()
+    t = t.split('<', 1)[0].strip()
+    t = t.split('.')[-1].strip()
+    return t
 
 
 def _enclosing_call_name(body, pos):
@@ -217,5 +269,134 @@ def run(fn):
             f"'remember(chave) {{ ... }}'.",
             offset=m.start(),
         ))
+
+    for m in COROUTINE_BUILDER_RE.finditer(body):
+        if _brace_depth(body, m.start()) != 0:
+            continue  # dentro de um bloco (onClick, LaunchedEffect, if, ...) — não é o corpo direto
+        findings.append(make_finding(
+            fn, 'coroutine-in-composition',
+            f"'{m.group(1)}(...)' chamado diretamente no corpo do composable — criar uma "
+            f"corrotina na composição a lança de novo a cada recomposição. Use "
+            f"'LaunchedEffect(key) {{ ... }}' para trabalho atrelado à composição, ou "
+            f"'rememberCoroutineScope()' + 'scope.{m.group(1)} {{ }}' dentro de um callback "
+            f"de evento (ex.: onClick).",
+            offset=m.start(),
+        ))
+
+    for m in COLLECT_AS_STATE_RE.finditer(body):
+        window_before = body[max(0, m.start() - 200):m.start()]
+        if FLOW_OPERATOR_RE.search(window_before):
+            findings.append(make_finding(
+                fn, 'flow-operator-in-composition',
+                "Operador de Flow (map/filter/combine/...) encadeado com collectAsState no "
+                "corpo — o Flow é recriado a cada recomposição. Mova a transformação para "
+                "fora da composição (no ViewModel, ou em 'remember { fluxo.map { } }').",
+                offset=m.start(),
+            ))
+        findings.append(make_finding(
+            fn, 'collect-as-state-not-lifecycle-aware',
+            "'.collectAsState()' coleta o Flow enquanto o composable estiver em composição, "
+            "mesmo com o app em background. Em código Android, prefira "
+            "'collectAsStateWithLifecycle()' (respeita o lifecycle, economiza recursos). "
+            "Em código multiplataforma/commonMain, mantenha 'collectAsState()'.",
+            offset=m.start(),
+        ))
+
+    for m in MUTABLE_COLLECTION_IN_STATE_RE.finditer(body):
+        findings.append(make_finding(
+            fn, 'mutable-collection-in-state',
+            f"mutableStateOf({m.group(1)}(...)) — uma coleção mutável dentro de um "
+            f"MutableState não notifica o Compose quando é mutada no lugar (ex.: .add()), "
+            f"então a UI não recompõe. Use 'mutableStateListOf'/'mutableStateMapOf', ou "
+            f"substitua a coleção inteira por uma imutável a cada mudança.",
+            offset=m.start(),
+        ))
+
+    for m in UNREMEMBERED_OBJECT_RE.finditer(body):
+        # prefixo do statement atual (até a última quebra de linha/';' antes) — mais preciso
+        # que uma janela fixa, que pegaria um 'remember' de um statement anterior.
+        stmt_start = max(body.rfind('\n', 0, m.start()), body.rfind(';', 0, m.start()))
+        window = body[stmt_start + 1:m.start()]
+        if 'remember' in window:
+            continue
+        findings.append(make_finding(
+            fn, 'unremembered-object',
+            f"'{m.group(1)}(...)' criado sem remember — o objeto é recriado a cada "
+            f"recomposição, perdendo seu estado. Envolva em 'remember {{ {m.group(1)}(...) }}' "
+            f"(ou use a factory 'remember{m.group(1)}(...)' quando existir).",
+            offset=m.start(),
+        ))
+
+    for p in fn.params:
+        root = _root_type(p['type'])
+        if root in MUTABLE_STATE_PARAM_TYPES:
+            findings.append(make_finding(
+                fn, 'mutable-state-param',
+                f"Parâmetro '{p['name']}: {p['type']}' expõe um tipo de estado mutável do "
+                f"Compose — isso divide a posse do estado entre quem chama e o composable. "
+                f"Prefira o padrão stateless: 'value: T' + 'onValueChange: (T) -> Unit'."
+            ))
+        elif root in UNSTABLE_PARAM_TYPES:
+            findings.append(make_finding(
+                fn, 'unstable-type-param',
+                f"Parâmetro '{p['name']}: {p['type']}' usa um tipo de biblioteca externa "
+                f"(não compilado com o compilador do Compose), tratado como instável — "
+                f"quebra a skippability. Prefira um tipo próprio anotado @Immutable, ou "
+                f"passe os campos já formatados (ex.: uma String) em vez do objeto cru."
+            ))
+        elif root in fn.sibling_unstable_classes:
+            findings.append(make_finding(
+                fn, 'mutable-class-param',
+                f"Parâmetro '{p['name']}: {p['type']}' usa uma classe com propriedade 'var' "
+                f"no construtor (declarada neste arquivo) — o compilador do Compose a trata "
+                f"como instável, quebrando a skippability. Torne as propriedades 'val' e "
+                f"anote a classe @Immutable, ou marque-a @Stable se há mutação observável."
+            ))
+
+    return findings
+
+
+def run_file(text, file_path, offsets):
+    """Checagens de nível de arquivo (declarações fora de corpos de @Composable):
+    naming de CompositionLocal e contradição @Immutable/@Stable + 'var'."""
+    findings = []
+
+    for m in COMPOSITION_LOCAL_DECL_RE.finditer(text):
+        name = m.group(1)
+        if not name.startswith('Local'):
+            findings.append({
+                'file': file_path,
+                'line': line_number(offsets, m.start()),
+                'checkId': 'composition-local-naming',
+                'message': f"CompositionLocal '{name}' deveria usar o prefixo 'Local' "
+                           f"(ex.: 'Local{name[0].upper() + name[1:]}') — é a convenção que "
+                           f"distingue CompositionLocals de valores/estados comuns.",
+            })
+
+    for m in STABILITY_ANNOTATION_RE.finditer(text):
+        annotation = m.group(1)
+        after = text[m.end():m.end() + 200]
+        class_m = re.search(r'\b(?:data\s+|value\s+)?class\s+(\w+)\s*(?:<[^>]*>)?\s*\(', after)
+        if not class_m:
+            continue
+        # só considera se não há outra declaração/quebra estrutural entre a anotação e o class
+        between = after[:class_m.start()]
+        if any(kw in between for kw in ('fun ', 'val ', 'var ', 'object ', ';')):
+            continue
+        open_paren = m.end() + class_m.end() - 1
+        close_paren = find_matching(text, open_paren, '(', ')')
+        if close_paren == -1:
+            continue
+        ctor = text[open_paren + 1:close_paren]
+        if re.search(r'\bvar\s+\w+', ctor):
+            findings.append({
+                'file': file_path,
+                'line': line_number(offsets, m.start()),
+                'checkId': 'immutable-annotation-with-var',
+                'message': f"@{annotation} em '{class_m.group(1)}', que tem propriedade 'var' "
+                           f"no construtor — a anotação promete estabilidade/imutabilidade "
+                           f"que a classe não cumpre (o Compose pode pular recomposições "
+                           f"incorretamente). Torne as propriedades 'val', ou remova a anotação.",
+            })
 
     return findings

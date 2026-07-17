@@ -201,5 +201,159 @@
     "references_file": "references/lazy-list-performance.md",
     "examples_file": "examples/06-naming-preview-and-lazylist-keys-before-after.md",
     "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria"
+  },
+  "image-missing-content-description": {
+    "topic": "accessibility",
+    "severity": "info",
+    "references_file": "references/accessibility.md",
+    "examples_file": "examples/09-accessibility-before-after.md",
+    "mirrors": "Diretrizes oficiais de acessibilidade do Compose — sem regra de linter dedicada habilitada por padrão"
+  },
+  "empty-content-description": {
+    "topic": "accessibility",
+    "severity": "warning",
+    "references_file": "references/accessibility.md",
+    "examples_file": "examples/09-accessibility-before-after.md",
+    "mirrors": "Diretrizes oficiais de acessibilidade do Compose — sem regra de linter dedicada habilitada por padrão"
+  },
+  "touch-target-too-small": {
+    "topic": "accessibility",
+    "severity": "warning",
+    "references_file": "references/accessibility.md",
+    "examples_file": "examples/09-accessibility-before-after.md",
+    "mirrors": "Diretrizes oficiais de acessibilidade do Compose (alvo mínimo de 48.dp / minimumInteractiveComponentSize) — sem regra de linter dedicada habilitada por padrão"
+  },
+  "null-content-description-clickable": {
+    "topic": "accessibility",
+    "severity": "info",
+    "references_file": "references/accessibility.md",
+    "examples_file": "examples/09-accessibility-before-after.md",
+    "mirrors": "Diretrizes oficiais de acessibilidade do Compose — sem regra de linter dedicada habilitada por padrão"
+  },
+  "clickable-without-semantics": {
+    "topic": "accessibility",
+    "severity": "info",
+    "references_file": "references/accessibility.md",
+    "examples_file": "examples/09-accessibility-before-after.md",
+    "mirrors": "Diretrizes oficiais de acessibilidade do Compose (role/onClickLabel para clickables customizados) — sem regra de linter dedicada habilitada por padrão"
+  },
+  "coroutine-in-composition": {
+    "topic": "state-and-recomposition",
+    "severity": "warning",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/10-composition-side-effects-before-after.md",
+    "mirrors": "Android Lint: CoroutineCreationDuringComposition"
+  },
+  "flow-operator-in-composition": {
+    "topic": "state-and-recomposition",
+    "severity": "info",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/10-composition-side-effects-before-after.md",
+    "mirrors": "Android Lint: FlowOperatorInvokedInComposition"
+  },
+  "mutable-collection-in-state": {
+    "topic": "state-and-recomposition",
+    "severity": "warning",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/10-composition-side-effects-before-after.md",
+    "mirrors": "Android Lint: MutableCollectionMutableState"
+  },
+  "collect-as-state-not-lifecycle-aware": {
+    "topic": "state-and-recomposition",
+    "severity": "info",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/10-composition-side-effects-before-after.md",
+    "mirrors": "Recomendação oficial (developer.android.com/develop/ui/compose/state) de collectAsStateWithLifecycle — sem lint habilitado por padrão"
+  },
+  "unremembered-object": {
+    "topic": "state-and-recomposition",
+    "severity": "warning",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/11-stability-and-remember-before-after.md",
+    "mirrors": "Android Lint: RememberInComposition (família UnrememberedAnimatable/UnrememberedMutableInteractionSource); ktlint/detekt compose-rules: RememberContentMissing (movableContentOf)"
+  },
+  "composition-local-naming": {
+    "topic": "state-and-recomposition",
+    "severity": "warning",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/11-stability-and-remember-before-after.md",
+    "mirrors": "Android Lint: CompositionLocalNaming; ktlint/detekt compose-rules: CompositionLocalNaming (compose:compositionlocal-naming)"
+  },
+  "immutable-annotation-with-var": {
+    "topic": "state-and-recomposition",
+    "severity": "warning",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/11-stability-and-remember-before-after.md",
+    "mirrors": "Diretrizes oficiais de estabilidade do Compose (@Stable/@Immutable como contrato) — sem lint dedicado"
+  },
+  "unstable-type-param": {
+    "topic": "state-and-recomposition",
+    "severity": "info",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/11-stability-and-remember-before-after.md",
+    "mirrors": "Diretrizes oficiais de estabilidade do Compose (tipos de módulos externos são instáveis) — sem lint dedicado"
+  },
+  "mutable-state-param": {
+    "topic": "state-and-recomposition",
+    "severity": "warning",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/11-stability-and-remember-before-after.md",
+    "mirrors": "ktlint/detekt compose-rules: MutableStateParam (compose:mutable-state-param-check)"
+  },
+  "mutable-class-param": {
+    "topic": "state-and-recomposition",
+    "severity": "info",
+    "references_file": "references/state-and-recomposition.md",
+    "examples_file": "examples/11-stability-and-remember-before-after.md",
+    "mirrors": "Diretrizes oficiais de estabilidade do Compose (classe com var é instável) — sem lint dedicado"
+  },
+  "scaffold-padding-ignored": {
+    "topic": "naming-and-api-shape",
+    "severity": "warning",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/12-api-shape-and-material-before-after.md",
+    "mirrors": "Android Lint: UnusedMaterial3ScaffoldPaddingParameter (e UnusedMaterialScaffoldPaddingParameter no Material 2)"
+  },
+  "boxwithconstraints-unused-scope": {
+    "topic": "naming-and-api-shape",
+    "severity": "info",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/12-api-shape-and-material-before-after.md",
+    "mirrors": "Android Lint: UnusedBoxWithConstraintsScope"
+  },
+  "animatedcontent-unused-target": {
+    "topic": "naming-and-api-shape",
+    "severity": "warning",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/12-api-shape-and-material-before-after.md",
+    "mirrors": "Android Lint: UnusedContentLambdaTargetStateParameter"
+  },
+  "composable-annotation-naming": {
+    "topic": "naming-and-api-shape",
+    "severity": "info",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/12-api-shape-and-material-before-after.md",
+    "mirrors": "ktlint/detekt compose-rules: ComposableAnnotationNaming (compose:composable-annotation-naming-check)"
+  },
+  "preview-annotation-naming": {
+    "topic": "naming-and-api-shape",
+    "severity": "info",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/12-api-shape-and-material-before-after.md",
+    "mirrors": "ktlint/detekt compose-rules: PreviewAnnotationNaming (compose:preview-annotation-naming)"
+  },
+  "event-trailing-lambda": {
+    "topic": "naming-and-api-shape",
+    "severity": "info",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/12-api-shape-and-material-before-after.md",
+    "mirrors": "ktlint/detekt compose-rules: LambdaParameterEventTrailing (compose:lambda-param-event-trailing)"
+  },
+  "material2-usage": {
+    "topic": "naming-and-api-shape",
+    "severity": "info",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/12-api-shape-and-material-before-after.md",
+    "mirrors": "ktlint/detekt compose-rules: Material2 (compose:material-two, opt-in); Android Lint: UsingMaterialAndMaterial3Libraries"
   }
 }

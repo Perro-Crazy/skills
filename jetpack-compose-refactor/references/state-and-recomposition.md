@@ -3,7 +3,11 @@
 Checagens do scanner que caem neste tópico: `unremembered-mutable-state`,
 `autoboxing-state-creation`, `unstable-collection-param`, `launched-effect-key-risk`,
 `composition-local-overuse`, `disposable-effect-missing-ondispose`,
-`backwards-state-write`, `unmemoized-derived-collection`.
+`backwards-state-write`, `unmemoized-derived-collection`, `coroutine-in-composition`,
+`flow-operator-in-composition`, `mutable-collection-in-state`,
+`collect-as-state-not-lifecycle-aware`, `unremembered-object`, `composition-local-naming`,
+`immutable-annotation-with-var`, `unstable-type-param`, `mutable-state-param`,
+`mutable-class-param`.
 
 ## `remember` vs `rememberSaveable` vs `derivedStateOf`
 
@@ -143,3 +147,95 @@ prioridade menor que os outros findings de `remember` ausente).
 - O scanner ignora esse padrão quando o cercamento imediato é `LaunchedEffect`/
   `produceState` — ali a recomputação já é controlada pela key do efeito, não pela
   recomposição.
+
+## Trabalho assíncrono na composição
+
+- **`launch`/`async` direto no corpo do composable** — criar uma corrotina durante a
+  composição a lança de novo a cada recomposição (potencialmente muitas vezes). O
+  builder deve viver dentro de `LaunchedEffect(key) { }` (trabalho atrelado à
+  composição) ou de `rememberCoroutineScope()` + `scope.launch { }` disparado por um
+  evento (ex.: `onClick`). **Finding: `coroutine-in-composition`** (severidade
+  `warning`; o scanner só sinaliza `launch`/`async` no nível direto do corpo — dentro
+  de qualquer bloco `{ }`, como um `onClick` ou um efeito, não dispara).
+  - Mirrors: Android Lint `CoroutineCreationDuringComposition`.
+- **Operador de `Flow` (`.map`/`.filter`/`.combine`/...) encadeado com `collectAsState`
+  no corpo** — recria o `Flow` a cada recomposição. **Finding:
+  `flow-operator-in-composition`** (severidade `info` — o scanner sinaliza quando há um
+  operador de Flow numa janela imediatamente antes de um `collectAsState`).
+  - Mirrors: Android Lint `FlowOperatorInvokedInComposition`.
+  - Fix: mova a transformação para o ViewModel, ou para `remember { fluxo.map { } }`.
+- **`collectAsState()` em vez de `collectAsStateWithLifecycle()`** — `collectAsState`
+  coleta enquanto o composable está em composição, mesmo com o app em background;
+  `collectAsStateWithLifecycle` usa `repeatOnLifecycle` e pausa a coleta fora do estado
+  ativo, economizando recursos/bateria. **Finding: `collect-as-state-not-lifecycle-aware`**
+  (severidade `info`).
+  - Recomendação oficial (developer.android.com) — sem lint dedicado habilitado por
+    padrão. **Exceção**: em código multiplataforma/`commonMain`, `collectAsStateWithLifecycle`
+    não existe (é Android-only); ali `collectAsState` é o correto — confirme o sourceSet
+    antes de trocar.
+
+## Coleção mutável dentro de `MutableState`
+
+`mutableStateOf(mutableListOf())` (ou `mutableMapOf`/`ArrayList`/`HashMap`/...) guarda
+uma coleção **mutável** dentro de um `MutableState`. Mutar a coleção no lugar
+(`.add()`, `.remove()`) não troca a referência do `State`, então o Compose não é
+notificado e a UI não recompõe. **Finding: `mutable-collection-in-state`** (severidade
+`warning`).
+- Mirrors: Android Lint `MutableCollectionMutableState`.
+- Fix: use `mutableStateListOf`/`mutableStateMapOf` (que são observáveis), ou substitua
+  a coleção inteira por uma nova (imutável) a cada mudança.
+
+## Objetos de estado criados sem `remember`
+
+Certos objetos que carregam estado precisam sobreviver a recomposições e por isso
+devem ser criados dentro de `remember { }` (ou via a factory `rememberXxx` quando
+existe): `Animatable`, `MutableInteractionSource`, `TextFieldState`, `FocusRequester`,
+`BringIntoViewRequester`, e `movableContentOf`. Criá-los direto no corpo os recria a
+cada recomposição, perdendo o estado acumulado. **Finding: `unremembered-object`**
+(severidade `warning`; o scanner verifica a ausência de `remember` no statement da
+criação).
+- Mirrors: Android Lint `RememberInComposition` (família `UnrememberedAnimatable`/
+  `UnrememberedMutableInteractionSource`); ktlint/detekt compose-rules
+  `RememberContentMissing` (para `movableContentOf`).
+- Fix: `val x = remember { Animatable(0f) }`, ou `rememberCoroutineScope`/
+  `rememberTextFieldState`/etc. conforme a API.
+
+## Naming de `CompositionLocal`
+
+Uma propriedade criada com `compositionLocalOf`/`staticCompositionLocalOf` deve usar o
+prefixo `Local` (ex.: `LocalSpacing`, não `Spacing`) — é a convenção que a distingue de
+valores/estados comuns na leitura do código. **Finding: `composition-local-naming`**
+(severidade `warning`; checagem de nível de arquivo, sobre a declaração).
+- Mirrors: Android Lint `CompositionLocalNaming`; ktlint/detekt compose-rules
+  `CompositionLocalNaming`.
+
+## Estabilidade avançada (além de coleções instáveis)
+
+Complementam `unstable-collection-param` (coleções `List`/`Map`/`Set`), atacando
+outras fontes de instabilidade que quebram a skippability de um composable:
+
+- **Parâmetro de tipo de estado mutável do Compose** (`MutableState<T>`,
+  `MutableIntState`, `SnapshotStateList`, `SnapshotStateMap`, ...) — divide a posse do
+  estado entre quem chama e o composable. **Finding: `mutable-state-param`** (severidade
+  `warning`). Fix: padrão stateless — `value: T` + `onValueChange: (T) -> Unit`.
+  - Mirrors: ktlint/detekt compose-rules `MutableStateParam`.
+- **Parâmetro de tipo de biblioteca externa** (`java.util.Date`, `Calendar`,
+  `LocalDateTime`, `LocalDate`, `LocalTime`, `Instant`) — tipos de módulos onde o
+  compilador do Compose não roda são sempre instáveis. **Finding: `unstable-type-param`**
+  (severidade `info` — lista conservadora de tipos claramente externos/mutáveis). Fix:
+  passe os campos já formatados (ex.: uma `String`), ou envolva num tipo próprio
+  anotado `@Immutable`.
+  - Sem lint dedicado — diretrizes oficiais de estabilidade do Compose.
+- **Parâmetro cujo tipo é uma classe com `var` no construtor** (declarada no mesmo
+  arquivo) — o compilador só rastreia mutações de `State`, então qualquer classe com
+  `var` é instável. **Finding: `mutable-class-param`** (severidade `info` — o scanner só
+  cruza contra classes com `var` declaradas no próprio arquivo; não resolve tipos entre
+  arquivos). Fix: torne as propriedades `val` e anote `@Immutable`, ou `@Stable` se há
+  mutação observável.
+  - Sem lint dedicado — diretrizes oficiais de estabilidade do Compose.
+- **`@Immutable`/`@Stable` sobre uma classe com `var` no construtor** — a anotação é uma
+  promessa de estabilidade que a classe não cumpre; o Compose pode pular recomposições
+  incorretamente confiando nela. **Finding: `immutable-annotation-with-var`** (severidade
+  `warning`; checagem de nível de arquivo). Fix: torne as propriedades `val`, ou remova
+  a anotação.
+  - Sem lint dedicado — diretrizes oficiais de estabilidade do Compose.
