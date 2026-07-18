@@ -23,6 +23,7 @@ LAMBDA_HEADER_RE = re.compile(r'\s*([\w\s,]+?)\s*->')
 ANNOTATION_CLASS_RE = re.compile(r'\bannotation\s+class\s+(\w+)')
 MATERIAL2_IMPORT_RE = re.compile(r'^\s*import\s+androidx\.compose\.material\.([A-Za-z_]\w*)', re.M)
 MATERIAL2_ALLOWED_SUBPACKAGES = {'icons', 'ripple', 'pullrefresh'}
+DEPRECATED_DIVIDER_RE = re.compile(r'\bDivider\s*\(')
 
 
 def _trailing_lambda_body(body, open_paren_pos):
@@ -245,6 +246,16 @@ def run(fn):
                     "barato (BoxWithConstraints adia a composição do conteúdo até a medição).",
                     offset=m.start(),
                 ))
+
+        for m in DEPRECATED_DIVIDER_RE.finditer(fn.body):
+            findings.append(make_finding(
+                fn, 'material3-deprecated-divider',
+                "'Divider(...)' está deprecated no Material 3 (desde a versão 1.1) em favor "
+                "de 'HorizontalDivider(...)' ou 'VerticalDivider(...)' — troque pelo "
+                "equivalente explícito de orientação (se este for o 'Divider' do Material 2, "
+                "o finding 'material2-usage' cobre a migração do import).",
+                offset=m.start(),
+            ))
 
     return findings
 

@@ -5,7 +5,7 @@ Checagens do scanner que caem neste tópico: `composable-naming`,
 `preview-naming-visibility`, `composable-emit-and-return`, `content-slot-param-naming`,
 `event-trailing-lambda`, `scaffold-padding-ignored`, `boxwithconstraints-unused-scope`,
 `animatedcontent-unused-target`, `composable-annotation-naming`,
-`preview-annotation-naming`, `material2-usage`.
+`preview-annotation-naming`, `material2-usage`, `material3-deprecated-divider`.
 
 ## Naming de composables
 
@@ -153,3 +153,19 @@ aqui é sinalizada como `info` para revisão).
   Lint `UsingMaterialAndMaterial3Libraries`.
 - Fix: use o equivalente em `androidx.compose.material3`. Se a migração para M3 ainda
   não é viável, é uma decisão de projeto — não troque imports sem confirmar.
+
+## `Divider` deprecated no Material 3
+
+`androidx.compose.material3.Divider` está marcado `@Deprecated` desde a versão 1.1.0 do
+Compose Material3, em favor de `HorizontalDivider`/`VerticalDivider` — a API antiga não
+deixava explícita a orientação, obrigando quem lê a inferir pelo contexto do layout
+(`Row`/`Column`) em vez do nome da própria chamada. **Finding:
+`material3-deprecated-divider`** (severidade `info`; checagem própria, textual — o
+scanner não distingue se o `Divider` importado é de `material` (M2) ou `material3`).
+- Sem regra de linter dedicada — checagem própria.
+- Se o `Divider` em questão for do Material 2, o finding `material2-usage` cobre a
+  migração do import; este finding é sobre a chamada em si, deprecated em ambos os casos
+  depois da migração para M3.
+- Fix: troque por `HorizontalDivider(...)` (caso mais comum, divisor horizontal dentro de
+  uma `Column`) ou `VerticalDivider(...)` (dentro de uma `Row`), conforme a orientação real
+  do divisor no layout.

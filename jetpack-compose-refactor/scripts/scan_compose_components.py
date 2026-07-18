@@ -44,6 +44,7 @@ from checks import (  # noqa: E402
     viewmodel_architecture,
     lazy_list_performance,
     accessibility,
+    material3_theming,
 )
 
 CHECK_MODULES = [
@@ -53,6 +54,7 @@ CHECK_MODULES = [
     viewmodel_architecture,
     lazy_list_performance,
     accessibility,
+    material3_theming,
 ]
 
 FUN_RE = re.compile(r'(?<![\w.])fun\s+(?:<[^>]*>\s+)?(\w+)\s*\(')

@@ -355,5 +355,26 @@
     "references_file": "references/naming-and-api-shape.md",
     "examples_file": "examples/12-api-shape-and-material-before-after.md",
     "mirrors": "ktlint/detekt compose-rules: Material2 (compose:material-two, opt-in); Android Lint: UsingMaterialAndMaterial3Libraries"
+  },
+  "material3-hardcoded-color": {
+    "topic": "material3-theming",
+    "severity": "info",
+    "references_file": "references/material3-theming.md",
+    "examples_file": "examples/13-material3-hardcoded-color-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria, inspirada nas diretrizes oficiais de theming do Material 3 (usar MaterialTheme.colorScheme em vez de cores fixas)"
+  },
+  "material3-hardcoded-typography": {
+    "topic": "material3-theming",
+    "severity": "info",
+    "references_file": "references/material3-theming.md",
+    "examples_file": "examples/13-material3-hardcoded-color-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria, inspirada nas diretrizes oficiais de theming do Material 3 (usar MaterialTheme.typography em vez de fontSize/fontFamily inline)"
+  },
+  "material3-deprecated-divider": {
+    "topic": "naming-and-api-shape",
+    "severity": "info",
+    "references_file": "references/naming-and-api-shape.md",
+    "examples_file": "examples/12-api-shape-and-material-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria; a API real (androidx.compose.material3.Divider) está marcada @Deprecated desde Compose Material3 1.1.0 em favor de HorizontalDivider/VerticalDivider"
   }
 }

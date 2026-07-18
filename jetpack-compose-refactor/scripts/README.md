@@ -132,5 +132,6 @@ scripts/
     ├── naming_and_api_shape.py
     ├── viewmodel_architecture.py
     ├── lazy_list_performance.py
-    └── accessibility.py
+    ├── accessibility.py
+    └── material3_theming.py
 ```

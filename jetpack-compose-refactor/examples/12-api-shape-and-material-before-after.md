@@ -80,3 +80,29 @@ código gera inconsistência de tema/estilo. Prefira o equivalente em `material3
 migração ainda não é viável, é uma decisão de projeto — não troque os imports sem
 confirmar (os subpacotes `material.icons`/`material.ripple` são compartilhados e não
 contam como uso de Material 2).
+
+## `Divider` deprecated no Material 3
+
+```kotlin
+// Antes — Divider deprecated desde Material3 1.1.0
+@Composable
+fun SettingsList(items: List<String>) {
+    Column {
+        items.forEach { item ->
+            Text(item)
+            Divider()
+        }
+    }
+}
+
+// Depois — orientação explícita no nome da chamada
+@Composable
+fun SettingsList(items: List<String>) {
+    Column {
+        items.forEach { item ->
+            Text(item)
+            HorizontalDivider()
+        }
+    }
+}
+```
