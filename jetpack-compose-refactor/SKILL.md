@@ -31,12 +31,26 @@ de problemas nem aplique a correção — trate como observação e siga o passo
 
 ## Workflow
 
-### 1. Resolver o alvo
+### 1. Resolver o alvo e o modo
 
 O alvo pode ser um arquivo específico, uma lista de composables citados pelo usuário,
 ou um diretório/raiz de projeto inteiro a varrer recursivamente — os dois modos são
 suportados igualmente pelo scanner. Se o usuário não deixar claro qual dos dois quer,
 pergunte antes de escolher um escopo grande por conta própria.
+
+Além do alvo, há dois **modos de operação**:
+
+- **Aplicação (padrão)** — as refatorações são escritas direto nos arquivos conforme o
+  passo 5 avança.
+- **Sugestão** — nenhum arquivo é tocado; para cada finding, proponha o diff (antes/depois)
+  e pare, aguardando o usuário aprovar quais aplicar. Use este modo quando o usuário
+  pedir explicitamente algo como "só sugere", "não edita ainda", "me mostra antes de
+  aplicar" — ou sempre que o escopo for grande o bastante (muitos arquivos/findings) que
+  aplicar tudo de uma vez sem revisão prévia seria arriscado; nesse caso, pergunte qual
+  modo o usuário prefere em vez de assumir aplicação direta.
+
+O modo escolhido vale para toda a sessão de refatoração corrente; não alterne entre os
+dois modos no meio do processo sem o usuário pedir.
 
 ### 2. Rodar o scanner
 
@@ -84,14 +98,23 @@ Para cada tópico com findings, abra **apenas** o `references/*.md` corresponden
 racional completo, o que o real linter checaria (`mirrors`), e aponta para o
 `examples/*.md` com o padrão antes/depois correspondente.
 
-### 5. Aplicar as refatorações
+### 5. Aplicar as refatorações (ou propô-las, no modo sugestão)
 
 Incrementalmente, um tópico/arquivo por vez — não misture múltiplos tópicos não
 relacionados num único diff grande. Para cada finding, use o exemplo em `examples/`
 como modelo de padrão, mas adapte ao código real (nomes, tipos, contexto) em vez de
 copiar literalmente.
 
+- **Modo aplicação**: edite os arquivos diretamente (via `Edit`/`Write`).
+- **Modo sugestão**: não use `Edit`/`Write` nesta etapa. Para cada finding, mostre um
+  bloco antes/depois (igual ao formato de `examples/*.md`) referenciando `arquivo:linha`,
+  sem gravar nada em disco. Agrupe por tópico/arquivo como faria no modo aplicação — a
+  única diferença é que o resultado fica em texto, aguardando aprovação, em vez de já
+  escrito. Deixe claro ao final de cada bloco que aquele diff ainda não foi aplicado.
+
 ### 6. Verificar
+
+No **modo aplicação**:
 
 - Re-rode o scanner no mesmo alvo e confirme que os findings-alvo desapareceram e
   nenhum finding novo (de outra checagem) surgiu como efeito colateral.
@@ -102,6 +125,11 @@ copiar literalmente.
 - Se uma refatoração mudou a assinatura pública de um composable (ex.: hoisting de
   estado adiciona/remove parâmetros), avise isso explicitamente no resumo — é uma
   mudança visível para quem chama, não algo para passar despercebido.
+
+No **modo sugestão**, este passo não roda ainda — nada foi escrito, então não há o que
+re-escanear ou compilar. Ele só se aplica depois que o usuário aprovar um ou mais diffs
+propostos e você efetivamente escrevê-los (nesse momento, trate como uma passagem pelo
+modo aplicação só para os findings aprovados).
 
 ### 7. Revisão manual (opcional, só sob pedido explícito)
 
@@ -118,7 +146,7 @@ usuário pedir explicitamente algo como "revise esse arquivo manualmente também
 
 ### 8. Resumir
 
-Ao final, reporte em duas listas sempre separadas:
+**Modo aplicação** — reporte em três listas sempre separadas:
 
 1. **Findings do scanner (determinístico)** — contagem antes/depois por tópico, lista
    de arquivos alterados, e qualquer item propositalmente adiado com o motivo (ex.:
@@ -130,6 +158,17 @@ Ao final, reporte em duas listas sempre separadas:
    download falhou, diga isso explicitamente em vez de omitir a seção.
 3. **Observações manuais (só se o passo 7 foi executado)** — rotulada explicitamente
    como não determinística, sem entrar na contagem acima.
+
+**Modo sugestão** — reporte, em vez disso:
+
+1. **Findings do scanner com diff proposto** — agrupados por tópico/arquivo, cada um com
+   o bloco antes/depois do passo 5, marcados como "aguardando aprovação". Nenhuma
+   contagem de "antes/depois" real ainda, já que nada foi aplicado.
+2. **Corroboração externa**, igual ao modo aplicação.
+3. **Observações manuais**, igual ao modo aplicação, se o passo 7 rodou.
+4. Uma pergunta objetiva ao final: quais diffs aplicar (todos, por tópico, ou um a um).
+   Depois de aprovados, aplique só os escolhidos e repita o passo 6 (verificar) para
+   eles — o restante continua só sugerido até nova instrução.
 
 ## Índice de referências
 

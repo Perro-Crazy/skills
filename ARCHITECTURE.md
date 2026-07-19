@@ -190,9 +190,12 @@ skill nova — essas descobertas são caras de refazer e baratas de documentar u
 O `SKILL.md` de uma skill deste padrão segue esta sequência de passos (adapte nomes,
 mantenha a ordem e as garantias):
 
-1. **Resolver o alvo** — arquivo único, lista de unidades citadas, ou diretório/projeto
-   inteiro. Pergunte antes de escolher um escopo grande por conta própria se houver
-   ambiguidade.
+1. **Resolver o alvo e o modo** — alvo: arquivo único, lista de unidades citadas, ou
+   diretório/projeto inteiro; pergunte antes de escolher um escopo grande por conta
+   própria se houver ambiguidade. Modo: aplicação direta (padrão) ou sugestão (ver
+   subseção dedicada abaixo) — pergunte quando o usuário pedir explicitamente revisão
+   prévia, ou quando o escopo for grande o bastante para tornar aplicação direta
+   arriscada sem revisão.
 2. **Rodar o scanner** — comando único, saída em JSON preferencialmente (mais fácil de
    processar), já enriquecida com `topic`/`severity`/`mirrors`.
 3. **Corroboração externa**, se a skill tiver esse recurso — decida explicitamente se é
@@ -202,17 +205,43 @@ mantenha a ordem e as garantias):
    a instalação silenciosa bloquear o fluxo se falhar.
 4. **Carregar só as referências relevantes** aos tópicos com findings — nunca carregar
    `references/*.md` inteiro de uma vez.
-5. **Aplicar as refatorações incrementalmente**, um tópico/arquivo por vez, usando o
-   `examples/*.md` correspondente como modelo de forma, adaptado ao código real.
-6. **Verificar**: re-rodar o scanner e confirmar que os findings-alvo sumiram sem
-   findings novos colaterais; compilar/testar de forma oportunista se houver
+5. **Aplicar as refatorações incrementalmente** (ou propô-las, no modo sugestão), um
+   tópico/arquivo por vez, usando o `examples/*.md` correspondente como modelo de forma,
+   adaptado ao código real.
+6. **Verificar**: no modo aplicação, re-rodar o scanner e confirmar que os findings-alvo
+   sumiram sem findings novos colaterais; compilar/testar de forma oportunista se houver
    infraestrutura de build real por trás do alvo (nunca obrigatório — a skill funciona
-   sem isso); sinalizar explicitamente qualquer mudança de assinatura/API pública.
+   sem isso); sinalizar explicitamente qualquer mudança de assinatura/API pública. No
+   modo sugestão, este passo fica pendente até o usuário aprovar algo.
 7. **Revisão manual** — só sob pedido explícito, rotulada como não determinística,
    nunca misturada à contagem de findings do scanner.
-8. **Resumir** sempre em seções separadas: (a) findings do scanner antes/depois
-   (determinístico), (b) saída bruta da corroboração externa se o passo 3 rodou, (c)
-   observações manuais se o passo 7 rodou. Nunca fundir essas três coisas numa lista só.
+8. **Resumir** sempre em seções separadas, adaptadas ao modo: no modo aplicação, (a)
+   findings do scanner antes/depois (determinístico), (b) saída bruta da corroboração
+   externa se o passo 3 rodou, (c) observações manuais se o passo 7 rodou; no modo
+   sugestão, (a) vira "findings com diff proposto, aguardando aprovação" e o relatório
+   termina com uma pergunta objetiva sobre quais diffs aplicar. Nunca fundir essas coisas
+   numa lista só.
+
+### Modo aplicação vs. modo sugestão
+
+Toda skill deste padrão deveria oferecer os dois modos, não só aplicação direta —
+alguém revisando um escopo grande de findings pela primeira vez frequentemente prefere
+ver o diff antes de deixar o agente escrever em disco. O toggle é barato de implementar
+porque reaproveita infraestrutura que já existe no padrão (o par antes/depois de
+`examples/*.md`, e a separação de seções do relatório final):
+
+- **Aplicação (padrão)** — comportamento descrito nos passos acima sem modificação:
+  edita direto via `Edit`/`Write`, verifica, resume com contagens reais.
+- **Sugestão** — nenhum arquivo é tocado. No passo 5, para cada finding, apresente um
+  bloco antes/depois (mesmo formato do `examples/*.md` correspondente) referenciando
+  `arquivo:linha`, sem gravar nada. O passo 6 (verificar) não roda ainda — não há o que
+  re-escanear se nada mudou. O passo 8 vira uma lista de diffs propostos aguardando
+  aprovação, terminando com uma pergunta objetiva ("aplicar tudo, por tópico, ou um a
+  um?"). Depois que o usuário aprovar algo, aplique só o aprovado e rode o passo 6 só
+  para isso — o resto continua como sugestão até nova instrução.
+
+Não alterne entre os dois modos no meio de uma sessão de refatoração sem o usuário
+pedir — decida o modo uma vez no passo 1 e mantenha até o fim do escopo corrente.
 
 ### O que toda skill deste padrão deve sempre perguntar antes de fazer
 
