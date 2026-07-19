@@ -45,6 +45,7 @@ from checks import (  # noqa: E402
     lazy_list_performance,
     accessibility,
     material3_theming,
+    interaction_and_focus,
 )
 
 CHECK_MODULES = [
@@ -55,6 +56,7 @@ CHECK_MODULES = [
     lazy_list_performance,
     accessibility,
     material3_theming,
+    interaction_and_focus,
 ]
 
 FUN_RE = re.compile(r'(?<![\w.])fun\s+(?:<[^>]*>\s+)?(\w+)\s*\(')

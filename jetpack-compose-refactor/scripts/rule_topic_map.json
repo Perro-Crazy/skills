@@ -376,5 +376,33 @@
     "references_file": "references/naming-and-api-shape.md",
     "examples_file": "examples/12-api-shape-and-material-before-after.md",
     "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria; a API real (androidx.compose.material3.Divider) está marcada @Deprecated desde Compose Material3 1.1.0 em favor de HorizontalDivider/VerticalDivider"
+  },
+  "interaction-source-in-clickable": {
+    "topic": "interaction-and-focus",
+    "severity": "info",
+    "references_file": "references/interaction-and-focus.md",
+    "examples_file": "examples/14-interaction-source-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria; InteractionSource é a API pública do Compose Foundation para observar estado de interação (Press/Release/Focus/Hover/Drag), espelhada em Compose Foundation 1.6+ (androidx.compose.foundation.interaction.MutableInteractionSource)"
+  },
+  "interaction-source-manual-collect": {
+    "topic": "interaction-and-focus",
+    "severity": "info",
+    "references_file": "references/interaction-and-focus.md",
+    "examples_file": "examples/14-interaction-source-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria; androidx.compose.foundation.interaction expõe collectIsPressedAsState()/collectIsFocusedAsState()/collectIsDraggedAsState()/collectIsHoveredAsState() como substitutos declarativos de '.interactions.collect { }' quando só um eixo de interação é observado"
+  },
+  "interaction-source-not-hoisted": {
+    "topic": "interaction-and-focus",
+    "severity": "info",
+    "references_file": "references/interaction-and-focus.md",
+    "examples_file": "examples/14-interaction-source-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria; espelha o princípio oficial de state hoisting do Compose aplicado a MutableInteractionSource"
+  },
+  "interaction-source-callback-not-stable": {
+    "topic": "interaction-and-focus",
+    "severity": "info",
+    "references_file": "references/interaction-and-focus.md",
+    "examples_file": "examples/14-interaction-source-before-after.md",
+    "mirrors": "Sem cobertura por Android Lint/ktlint/detekt — checagem própria; espelha o alerta oficial de side-effects do Compose sobre capturar valores desatualizados dentro de LaunchedEffect (rememberUpdatedState)"
   }
 }
