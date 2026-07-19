@@ -1,0 +1,170 @@
+{
+  "manifest-allow-backup-enabled": {
+    "topic": "security-and-manifest",
+    "severity": "warning",
+    "references_file": "references/security-and-manifest.md",
+    "examples_file": "examples/01-manifest-and-secrets-before-after.md",
+    "mirrors": "Android Lint: AllowBackup (id documentado publicamente; não executado neste ambiente por falta de Android SDK/Gradle — ver scripts/README.md)"
+  },
+  "manifest-debuggable-enabled": {
+    "topic": "security-and-manifest",
+    "severity": "warning",
+    "references_file": "references/security-and-manifest.md",
+    "examples_file": "examples/01-manifest-and-secrets-before-after.md",
+    "mirrors": "Android Lint: HardcodedDebugMode (id documentado publicamente; não executado neste ambiente)"
+  },
+  "manifest-cleartext-traffic-enabled": {
+    "topic": "security-and-manifest",
+    "severity": "warning",
+    "references_file": "references/security-and-manifest.md",
+    "examples_file": "examples/01-manifest-and-secrets-before-after.md",
+    "mirrors": "Android Lint: UsesCleartextTraffic (id documentado publicamente; não executado neste ambiente)"
+  },
+  "manifest-component-exported-without-permission": {
+    "topic": "security-and-manifest",
+    "severity": "warning",
+    "references_file": "references/security-and-manifest.md",
+    "examples_file": "examples/01-manifest-and-secrets-before-after.md",
+    "mirrors": "Android Lint: família ExportedReceiver / ExportedService / ExportedContentProvider (ids documentados publicamente; não executado neste ambiente)"
+  },
+  "hardcoded-secret-literal": {
+    "topic": "security-and-manifest",
+    "severity": "warning",
+    "references_file": "references/security-and-manifest.md",
+    "examples_file": "examples/01-manifest-and-secrets-before-after.md",
+    "mirrors": "Sem id formal de Android Lint/detekt equivalente — checagem própria, mesma classe de problema que scanners de segredo genéricos (ex.: gitleaks/trufflehog) cobrem em outros ecossistemas"
+  },
+  "hardcoded-http-url": {
+    "topic": "security-and-manifest",
+    "severity": "info",
+    "references_file": "references/security-and-manifest.md",
+    "examples_file": "examples/01-manifest-and-secrets-before-after.md",
+    "mirrors": "Relacionado a Android Lint: UsesCleartextTraffic, mas aplicado no nível de literal de código em vez do manifest — checagem própria"
+  },
+  "static-field-leaks-context": {
+    "topic": "context-and-lifecycle-leaks",
+    "severity": "warning",
+    "references_file": "references/context-and-lifecycle-leaks.md",
+    "examples_file": "examples/02-context-leaks-before-after.md",
+    "mirrors": "Android Lint: StaticFieldLeak (id documentado publicamente; não executado neste ambiente)"
+  },
+  "fragment-view-binding-not-cleared": {
+    "topic": "context-and-lifecycle-leaks",
+    "severity": "warning",
+    "references_file": "references/context-and-lifecycle-leaks.md",
+    "examples_file": "examples/02-context-leaks-before-after.md",
+    "mirrors": "Sem id formal de Android Lint/detekt — guidance oficial do Android sobre View Binding em Fragments (developer.android.com/topic/libraries/view-binding#fragments); checagem própria"
+  },
+  "handler-inner-class-leak": {
+    "topic": "context-and-lifecycle-leaks",
+    "severity": "info",
+    "references_file": "references/context-and-lifecycle-leaks.md",
+    "examples_file": "examples/02-context-leaks-before-after.md",
+    "mirrors": "Android Lint: HandlerLeak (id historicamente documentado, majoritariamente para Java; heurística adaptada para 'inner class' em Kotlin — não executado neste ambiente)"
+  },
+  "livedata-observeforever-not-removed": {
+    "topic": "context-and-lifecycle-leaks",
+    "severity": "info",
+    "references_file": "references/context-and-lifecycle-leaks.md",
+    "examples_file": "examples/02-context-leaks-before-after.md",
+    "mirrors": "Sem id formal de Android Lint/detekt — guidance oficial de LiveData (observeForever exige removeObserver manual); checagem própria"
+  },
+  "globalscope-launch-usage": {
+    "topic": "coroutines-and-threading",
+    "severity": "warning",
+    "references_file": "references/coroutines-and-threading.md",
+    "examples_file": "examples/03-coroutines-globalscope-before-after.md",
+    "mirrors": "detekt (ruleset coroutines, built-in): GlobalCoroutineUsage (id documentado publicamente; não executado neste ambiente — ver scripts/README.md)"
+  },
+  "runblocking-outside-tests": {
+    "topic": "coroutines-and-threading",
+    "severity": "warning",
+    "references_file": "references/coroutines-and-threading.md",
+    "examples_file": "examples/03-coroutines-globalscope-before-after.md",
+    "mirrors": "Sem id formal de Android Lint/detekt conhecido — checagem própria, baseada em guidance oficial de coroutines sobre bloqueio de thread"
+  },
+  "viewmodel-manual-coroutinescope": {
+    "topic": "coroutines-and-threading",
+    "severity": "info",
+    "references_file": "references/coroutines-and-threading.md",
+    "examples_file": "examples/03-coroutines-globalscope-before-after.md",
+    "mirrors": "Sem id formal de Android Lint/detekt — guidance oficial de androidx.lifecycle:lifecycle-viewmodel-ktx (viewModelScope); checagem própria"
+  },
+  "asynctask-subclass-deprecated": {
+    "topic": "coroutines-and-threading",
+    "severity": "info",
+    "references_file": "references/coroutines-and-threading.md",
+    "examples_file": "examples/03-coroutines-globalscope-before-after.md",
+    "mirrors": "AsyncTask está formalmente @Deprecated na API Android desde o nível 30 — o Kotlin compiler já emite DEPRECATION nesse uso; checagem própria só reforça a recomendação de migração"
+  },
+  "not-null-assertion-operator": {
+    "topic": "error-handling-and-null-safety",
+    "severity": "info",
+    "references_file": "references/error-handling-and-null-safety.md",
+    "examples_file": "examples/04-exception-handling-before-after.md",
+    "mirrors": "detekt (ruleset potential-bugs, built-in): UnsafeCallOnNullableType (id documentado publicamente; não executado neste ambiente)"
+  },
+  "empty-catch-block": {
+    "topic": "error-handling-and-null-safety",
+    "severity": "warning",
+    "references_file": "references/error-handling-and-null-safety.md",
+    "examples_file": "examples/04-exception-handling-before-after.md",
+    "mirrors": "detekt (ruleset empty-blocks, built-in): EmptyCatchBlock (id documentado publicamente; não executado neste ambiente)"
+  },
+  "generic-exception-caught": {
+    "topic": "error-handling-and-null-safety",
+    "severity": "info",
+    "references_file": "references/error-handling-and-null-safety.md",
+    "examples_file": "examples/04-exception-handling-before-after.md",
+    "mirrors": "detekt (ruleset exceptions, built-in): TooGenericExceptionCaught (id documentado publicamente; não executado neste ambiente)"
+  },
+  "swallowed-exception": {
+    "topic": "error-handling-and-null-safety",
+    "severity": "warning",
+    "references_file": "references/error-handling-and-null-safety.md",
+    "examples_file": "examples/04-exception-handling-before-after.md",
+    "mirrors": "detekt (ruleset exceptions, built-in): SwallowedException (id documentado publicamente; não executado neste ambiente)"
+  },
+  "printstacktrace-usage": {
+    "topic": "error-handling-and-null-safety",
+    "severity": "info",
+    "references_file": "references/error-handling-and-null-safety.md",
+    "examples_file": "examples/04-exception-handling-before-after.md",
+    "mirrors": "detekt (ruleset exceptions, built-in): PrintStackTrace (id documentado publicamente; não executado neste ambiente)"
+  },
+  "hardcoded-user-facing-string": {
+    "topic": "resource-and-ui-hygiene",
+    "severity": "warning",
+    "references_file": "references/resource-and-ui-hygiene.md",
+    "examples_file": "examples/05-hardcoded-resources-before-after.md",
+    "mirrors": "Android Lint: HardcodedText / SetTextI18n (ids documentados publicamente; não executado neste ambiente)"
+  },
+  "hardcoded-hex-color": {
+    "topic": "resource-and-ui-hygiene",
+    "severity": "info",
+    "references_file": "references/resource-and-ui-hygiene.md",
+    "examples_file": "examples/05-hardcoded-resources-before-after.md",
+    "mirrors": "Sem id formal de Android Lint/detekt conhecido — checagem própria, mesma família de guidance que HardcodedText aplicada a cor em vez de texto"
+  },
+  "println-instead-of-log": {
+    "topic": "resource-and-ui-hygiene",
+    "severity": "info",
+    "references_file": "references/resource-and-ui-hygiene.md",
+    "examples_file": "examples/05-hardcoded-resources-before-after.md",
+    "mirrors": "Sem id formal de Android Lint/detekt — guidance geral de observabilidade em Android (usar android.util.Log em vez de stdout); checagem própria"
+  },
+  "viewmodel-holds-android-ui-reference": {
+    "topic": "architecture-and-di",
+    "severity": "warning",
+    "references_file": "references/architecture-and-di.md",
+    "examples_file": "examples/06-architecture-viewmodel-context-before-after.md",
+    "mirrors": "Sem id formal de Android Lint/detekt — guidance oficial do Guide to App Architecture (ViewModel não deve referenciar View/Lifecycle/Activity); checagem própria"
+  },
+  "ui-layer-instantiates-network-or-db-client": {
+    "topic": "architecture-and-di",
+    "severity": "info",
+    "references_file": "references/architecture-and-di.md",
+    "examples_file": "examples/06-architecture-viewmodel-context-before-after.md",
+    "mirrors": "Sem id formal de Android Lint/detekt — guidance oficial do Guide to App Architecture (separação de camadas UI/dados); checagem própria"
+  }
+}
